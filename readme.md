@@ -1,6 +1,27 @@
-# s4ndyp/scripts — Proxmox LXC scripts
+# s4ndyp/scripts — xdio scripts (Proxmox LXC)
 
-Eigen Proxmox-installatiescripts in de stijl van [community-scripts/ProxmoxVE](https://github.com/community-scripts/ProxmoxVE): één LXC per app, Docker in de container, applicatie klaar na het script.
+Eigen Proxmox-installatiescripts in de stijl van [community-scripts/ProxmoxVE](https://github.com/community-scripts/ProxmoxVE): één LXC per app, Docker in de container, applicatie klaar na het script. De engine blijft `community-scripts/core`; banner en tags zijn **xdio scripts**.
+
+## Netwerk (default install)
+
+Bij **Default Install**, **App Defaults** (zonder `var_net`) en **Generated** krijgt elke LXC automatisch:
+
+| Instelling | Waarde |
+|------------|--------|
+| IPv4 | `10.5.0.<CTID>/16` (CTID = LXC-nummer) |
+| Gateway | `10.5.0.1` |
+
+Zet `var_net` in User/App defaults of kies **Advanced Install** voor DHCP of een ander adres. Uitschakelen: `export XDIO_STATIC_NET=0` vóór het script.
+
+Optioneel in `default.vars` op de Proxmox-host: `var_gateway=10.5.0.1` (zie `defaults/xdio.vars.example`).
+
+## Gedeelde library
+
+| Bestand | Doel |
+|---------|------|
+| `lib/xdio.func` | ASCII-banner, tag `xdio-script`, vast IP-schema |
+
+Elk app-script sourced `lib/xdio.func` **na** `build.func`.
 
 ## Structuur
 
