@@ -10,7 +10,7 @@ export COMMUNITY_SCRIPTS_URL="${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercon
 _cs_boot="${COMMUNITY_SCRIPTS_CORE_DIR:-$(dirname "${BASH_SOURCE[0]}")/../../core}/core/build.func"
 source "$_cs_boot" 2>/dev/null || source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/core/build.func")
 
-# Branding (xdio scripts) + vast IP 10.5.0.<CTID> bij Default Install
+# Branding (xdio scripts)
 if [[ -f "$(dirname "${BASH_SOURCE[0]}")/../lib/xdio.func" ]]; then
   # shellcheck source=/dev/null
   source "$(dirname "${BASH_SOURCE[0]}")/../lib/xdio.func"
@@ -20,7 +20,7 @@ else
 fi
 
 APP="WasmMe"
-var_tags="${var_tags:-wasm;static;docker}"
+var_tags="${var_tags:-wasm;docker}"
 var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-1024}"
 var_disk="${var_disk:-8}"
