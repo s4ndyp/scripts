@@ -74,6 +74,55 @@ _xdio_print_banner() {
   _xdio_print_rainbow_banner
 }
 
+# Statisch netwerk (Default / App / Generated), tenzij var_net gezet of XDIO_STATIC_NET=0
+export XDIO_STATIC_NET="${XDIO_STATIC_NET:-1}"
+export XDIO_NET_PREFIX="${XDIO_NET_PREFIX:-10.5.0}"
+export XDIO_GATEWAY="${XDIO_GATEWAY:-10.5.0.1}"
+export XDIO_NET_CIDR="${XDIO_NET_CIDR:-16}"
+export XDIO_DNS="${XDIO_DNS:-10.5.0.110 10.5.0.111}"
+export XDIO_VLAN="${XDIO_VLAN:-5}"
+
+_xdio_use_static_network() {
+  [[ "${XDIO_STATIC_NET}" == "0" ]] && return 1
+  case "${METHOD:-}" in
+  default | appdefaults | generated) ;;
+  *) return 1 ;;
+  esac
+  [[ -n "${var_net:-}" ]] && return 1
+  return 0
+}
+
+_xdio_pre_base_settings() {
+  _xdio_use_static_network || return 0
+  if [[ -z "${var_vlan:-}" ]]; then
+    var_vlan="${XDIO_VLAN}"
+    export var_vlan
+  fi
+}
+
+_xdio_post_base_settings() {
+  _xdio_use_static_network || return 0
+  [[ -z "${CT_ID:-}" ]] && return 0
+  NET="${XDIO_NET_PREFIX}.${CT_ID}/${XDIO_NET_CIDR}"
+  GATE="${var_gateway:-${XDIO_GATEWAY}}"
+  export NET GATE
+  if [[ -z "${var_ns:-}" ]]; then
+    XDIO_DNS_FULL="${XDIO_DNS}"
+    var_ns="${XDIO_DNS}"
+    NS="-nameserver=$(echo "$XDIO_DNS" | awk '{print $1}')"
+    export var_ns NS XDIO_DNS_FULL
+  fi
+}
+
+_xdio_pct_create() {
+  _xdio_cs_pct_create "$@"
+  local rc=$?
+  if ((rc == 0)) && [[ -n "${XDIO_DNS_FULL:-}" ]] && [[ "$XDIO_DNS_FULL" == *[[:space:]]* ]]; then
+    pct set "$1" --nameserver "$XDIO_DNS_FULL" >>"${BUILD_LOG:-/dev/null}" 2>&1 || true
+  fi
+  return "$rc"
+}
+
 _xdio_apply_tags() {
   if [[ -n "${TAGS:-}" ]]; then
     TAGS="${TAGS//community-script/xdio-script}"
@@ -86,8 +135,17 @@ _xdio_apply_tags() {
 if declare -f base_settings >/dev/null 2>&1; then
   eval "$(declare -f base_settings | sed '1s/base_settings/_xdio_cs_base_settings/')"
   base_settings() {
+    _xdio_pre_base_settings
     _xdio_cs_base_settings "$@"
+    _xdio_post_base_settings
     _xdio_apply_tags
+  }
+fi
+
+if declare -f _pct_create >/dev/null 2>&1; then
+  eval "$(declare -f _pct_create | sed '1s/_pct_create/_xdio_cs_pct_create/')"
+  _pct_create() {
+    _xdio_pct_create "$@"
   }
 fi
 
