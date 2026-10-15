@@ -2,6 +2,8 @@
 # WasmMe container install — draait binnen de LXC via community-scripts engine.
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+# shellcheck source=/dev/null
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-motd.sh")
 color
 verb_ip6
 catch_errors

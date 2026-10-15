@@ -9,8 +9,12 @@ Netwerk gebruikt de **community-scripts defaults (DHCP op vmbr0)**. Statisch IP,
 | Bestand | Doel |
 |---------|------|
 | `lib/xdio.func` | Figlet-banner met horizontaal regenboogverloop, tag `xdio-script` |
+| `lib/xdio-compose-install.sh` | GHCR-login + docker compose pull/up (install-scripts) |
+| `lib/xdio-motd.sh` | LXC-login: “Provided by: **Xdio scripts**” → [s4ndyp/scripts](https://github.com/s4ndyp/scripts) |
 
 Elk app-script sourced `lib/xdio.func` **na** `build.func`.
+
+In elke eigen LXC wordt de app op **poort 80** bereikbaar (compose-poort wordt bij install naar `80:…` gezet), behalve WasmMe (site 80, admin 8080).
 
 ## Structuur
 
@@ -19,7 +23,25 @@ Elk app-script sourced `lib/xdio.func` **na** `build.func`.
 | `{app}/{app}.sh` | Aanroepen **op de Proxmox-host** (maakt LXC + installatie) |
 | `install/{app}-install.sh` | Installatie binnen de LXC (wordt door de engine opgehaald; naam moet `{app}-install` zijn) |
 
-Nieuwe app toevoegen: kopieer het WasmMe-voorbeeld, pas `APP`, tags en resources aan, en zet de install-logica in `install/jouapp-install.sh`.
+Nieuwe app toevoegen: kopieer een bestaand voorbeeld, pas `APP`, tags en resources aan, en zet de install-logica in `install/jouapp-install.sh`.
+
+## Apps
+
+| App | Script | Repo | URL na install |
+|-----|--------|------|----------------|
+| WasmMe | `wasmme/wasmme.sh` | [wasmme](https://github.com/s4ndyp/wasmme) | `:80` site, `:8080` admin |
+| FinancePro | `financepro/financepro.sh` | [financepro](https://github.com/s4ndyp/financepro) | `http://<ip>` |
+| TrackNote | `tracknote/tracknote.sh` | [tracknote](https://github.com/s4ndyp/tracknote) | `http://<ip>` |
+| TinyNote | `tinynote/tinynote.sh` | [tinynote](https://github.com/s4ndyp/tinynote) | `http://<ip>` |
+| AssetVault | `assetvault/assetvault.sh` | (nog geen public repo) | `http://<ip>` |
+
+Voorbeeld FinancePro:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/financepro/financepro.sh)"
+```
+
+**AssetVault:** als `s4ndyp/assetvault` nog niet bestaat, gebruikt het install-script een ingebouwde compose (`ghcr.io/s4ndyp/assetvault:latest`). Override: `ASSETVAULT_COMPOSE_URL=…` op de Proxmox-host (wordt niet automatisch doorgegeven aan de LXC — zet desnoods de compose-URL in een aangepast install-script of publiceer de repo).
 
 ## WasmMe
 
