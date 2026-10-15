@@ -85,6 +85,7 @@ In elke eigen LXC wordt de app op **poort 80** bereikbaar (compose-poort wordt b
 | Pad | Doel |
 |-----|------|
 | `{app}/{app}.sh` | Aanroepen **op de Proxmox-host** (maakt LXC + installatie) |
+| `ct/{app}.sh` | Pad voor **`update`** in de LXC (community-scripts helper; wijst door naar `{app}/{app}.sh`) |
 | `install/{app}-install.sh` | Installatie binnen de LXC (wordt door de engine opgehaald; naam moet `{app}-install` zijn) |
 
 Nieuwe app toevoegen: kopieer een bestaand voorbeeld, pas `APP`, tags en resources aan, en zet de install-logica in `install/jouapp-install.sh`.
