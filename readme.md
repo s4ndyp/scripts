@@ -8,7 +8,7 @@ Bij **Default Install**, **App Defaults** (zonder `var_net`) en **Generated** kr
 
 | Instelling | Waarde |
 |------------|--------|
-| IPv4 | `10.5.0.<CTID>/24` (CTID = LXC-nummer) |
+| IPv4 | `10.5.0.<CTID>/16` (CTID = LXC-nummer) |
 | Gateway | `10.5.0.1` |
 
 Zet `var_net` in User/App defaults of kies **Advanced Install** voor DHCP of een ander adres. Uitschakelen: `export XDIO_STATIC_NET=0` vóór het script.

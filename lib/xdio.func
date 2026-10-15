@@ -4,11 +4,11 @@
 [[ -n "${_XDIO_FUNC_LOADED:-}" ]] && return 0
 _XDIO_FUNC_LOADED=1
 
-# Vast IP-schema: 10.5.0.<CTID>/24, gateway 10.5.0.1 (alleen Default / App / Generated install)
+# Vast IP-schema: 10.5.0.<CTID>/16, gateway 10.5.0.1 (alleen Default / App / Generated install)
 export XDIO_STATIC_NET="${XDIO_STATIC_NET:-1}"
 export XDIO_NET_PREFIX="${XDIO_NET_PREFIX:-10.5.0}"
 export XDIO_GATEWAY="${XDIO_GATEWAY:-10.5.0.1}"
-export XDIO_NET_CIDR="${XDIO_NET_CIDR:-24}"
+export XDIO_NET_CIDR="${XDIO_NET_CIDR:-16}"
 
 _XDIO_BANNER='   __  __ ______  ____   _____           _       __
    \ \/ // __  \/ __ \ / ___/___  ____  (_)___  / /______

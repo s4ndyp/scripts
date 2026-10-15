@@ -1,7 +1,7 @@
 # Voorbeeld — kopieer naar je Proxmox-host als User Defaults, bijv.:
 #   /usr/local/community-scripts/default.vars
 #
-# Laat var_net weg voor automatisch 10.5.0.<CTID>/24 bij Default Install.
+# Laat var_net weg voor automatisch 10.5.0.<CTID>/16 bij Default Install.
 # var_gateway=10.5.0.1
 
 var_gateway=10.5.0.1
