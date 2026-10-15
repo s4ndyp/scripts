@@ -1,0 +1,7 @@
+# Optioneel op de Proxmox-host: /usr/local/community-scripts/default.vars
+# Laat var_net weg voor automatisch 10.5.0.<CTID>/16 + VLAN 5.
+
+var_gateway=10.5.0.1
+var_ns=10.5.0.110 10.5.0.111
+var_vlan=5
+var_brg=vmbr0

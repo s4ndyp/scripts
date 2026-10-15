@@ -2,7 +2,18 @@
 
 Eigen Proxmox-installatiescripts in de stijl van [community-scripts/ProxmoxVE](https://github.com/community-scripts/ProxmoxVE): één LXC per app, Docker in de container, applicatie klaar na het script. De engine blijft `community-scripts/core`; banner en tags zijn **xdio scripts**.
 
-Netwerk gebruikt de **community-scripts defaults (DHCP op vmbr0)**. Statisch IP, gateway of DNS kun je desgewenst zelf instellen via **Advanced Install** of User/App defaults (`var_net`, `var_gateway`, `var_ns`).
+## Netwerk (Default Install)
+
+Bij **Default Install**, **App Defaults** (zonder `var_net`) en **Generated** zet `lib/xdio.func` (alle app-scripts) automatisch:
+
+| Instelling | Waarde |
+|------------|--------|
+| IPv4 | `10.5.0.<CTID>/16` |
+| Gateway | `10.5.0.1` |
+| DNS | `10.5.0.110`, `10.5.0.111` |
+| VLAN (vmbr0) | **5** |
+
+Uitschakelen: `export XDIO_STATIC_NET=0` vóór het script. Andere waarden: `XDIO_NET_PREFIX`, `XDIO_GATEWAY`, `XDIO_DNS`, `XDIO_VLAN`, of `var_*` via **Advanced** / User defaults.
 
 ## Proxmox-host — alle scripts
 
