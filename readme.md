@@ -38,6 +38,12 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/tiny
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/assetvault/assetvault.sh)"
 ```
 
+**DynCompare** (app :80, sync :8080)
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/dyncompare/dyncompare.sh)"
+```
+
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
 ```bash
@@ -65,6 +71,7 @@ Standaard resources (alle apps): 1 CPU, 1 GB RAM, 8 GB disk, Debian 13, unprivil
 | TrackNote | [tracknote](https://github.com/s4ndyp/tracknote) | `http://<ip>` |
 | TinyNote | [tinynote](https://github.com/s4ndyp/tinynote) | `http://<ip>` |
 | AssetVault | (nog geen public repo) | `http://<ip>` |
+| DynCompare | [dyncompare](https://github.com/s4ndyp/dyncompare) | `:80` app, `:8080` sync |
 
 **AssetVault:** als `s4ndyp/assetvault` nog niet bestaat, gebruikt het install-script een ingebouwde compose (`ghcr.io/s4ndyp/assetvault:latest`).
 
@@ -78,7 +85,7 @@ Standaard resources (alle apps): 1 CPU, 1 GB RAM, 8 GB disk, Debian 13, unprivil
 
 Elk app-script sourced `lib/xdio.func` **na** `build.func`.
 
-In elke eigen LXC wordt de app op **poort 80** bereikbaar (compose-poort wordt bij install naar `80:…` gezet), behalve WasmMe (site 80, admin 8080).
+In elke eigen LXC wordt de hoofdapp op **poort 80** bereikbaar (compose-poort wordt bij install aangepast), behalve WasmMe en DynCompare (extra service op **8080**).
 
 ## Structuur
 
@@ -90,25 +97,15 @@ In elke eigen LXC wordt de app op **poort 80** bereikbaar (compose-poort wordt b
 
 Nieuwe app toevoegen: kopieer een bestaand voorbeeld, pas `APP`, tags en resources aan, en zet de install-logica in `install/jouapp-install.sh`.
 
-## WasmMe (details)
+## Update in de container
 
-Webbeheer voor WASM/static sites: admin op poort **8080**, gepubliceerde site op poort **80**.
+In de LXC: **`update`**, of handmatig:
 
-### Update (bestaande LXC)
-
-Script opnieuw op de host (menu **Update**), of in de container:
+**WasmMe**
 
 ```bash
 cd /opt/wasmme && docker compose pull && docker compose up -d
 ```
-
-### Na installatie
-
-- Site: `http://<container-ip>`
-- Admin: `http://<container-ip>:8080`
-- Overzicht: `~/wasmme.creds` in de container
-
-## Overige apps — update in de container
 
 **FinancePro**
 
@@ -134,4 +131,10 @@ cd /opt/tinynote && docker compose pull && docker compose up -d
 cd /opt/assetvault && docker compose pull && docker compose up -d
 ```
 
-Credentials: `~/financepro.creds`, `~/tracknote.creds`, `~/tinynote.creds`, `~/assetvault.creds`.
+**DynCompare**
+
+```bash
+cd /opt/dyncompare && docker compose pull && docker compose up -d
+```
+
+Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`).
