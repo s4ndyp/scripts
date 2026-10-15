@@ -4,13 +4,6 @@
 [[ -n "${_XDIO_FUNC_LOADED:-}" ]] && return 0
 _XDIO_FUNC_LOADED=1
 
-_XDIO_BANNER='   __  __ ______  ____   _____           _       __
-   \ \/ // __  \/ __ \ / ___/___  ____  (_)___  / /______
-    \  // / / / / / / / \__ \/ _ \/ __ \/ / __ \/ __/ ___/
-    / // /_/ / / /_/ / ___/ /  __/ / / / / /_/ / /_(__  )
-   /_/ \____/  \____/ /____/\___/_/ /_/_/\____/\__/____/
-                         Scripts'
-
 _xdio_apply_tags() {
   if [[ -n "${TAGS:-}" ]]; then
     TAGS="${TAGS//community-script/xdio-script}"
@@ -18,6 +11,21 @@ _xdio_apply_tags() {
     TAGS="xdio-script${var_tags:+;${var_tags}}"
   fi
   export TAGS
+}
+
+_xdio_print_banner() {
+  local banner_file url
+  banner_file="$(dirname "${BASH_SOURCE[0]}")/xdio-banner.ans"
+  url="${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-banner.ans"
+
+  if [[ -s "$banner_file" ]]; then
+    cat "$banner_file"
+    return 0
+  fi
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$url" 2>/dev/null && return 0
+  fi
+  echo "xdio scripts"
 }
 
 if declare -f base_settings >/dev/null 2>&1; then
@@ -34,6 +42,6 @@ header_info() {
   else
     clear 2>/dev/null || true
   fi
-  echo "${_XDIO_BANNER}"
-  echo "  ${APP:-}"
+  _xdio_print_banner
+  printf '\033[0m\n  %s\n' "${APP:-}"
 }
