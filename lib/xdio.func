@@ -9,7 +9,8 @@ export XDIO_STATIC_NET="${XDIO_STATIC_NET:-1}"
 export XDIO_NET_PREFIX="${XDIO_NET_PREFIX:-10.5.0}"
 export XDIO_GATEWAY="${XDIO_GATEWAY:-10.5.0.1}"
 export XDIO_NET_CIDR="${XDIO_NET_CIDR:-16}"
-# pct -nameserver (spatie-gescheiden); leeg = host-DHCP of niets bij statisch IP
+# DNS (spatie-gescheiden). pct create krijgt alleen het 1e adres (PCT_OPTIONS wordt
+# unquoted gesplit); volledige lijst wordt direct na create gezet via pct set.
 export XDIO_DNS="${XDIO_DNS:-10.5.0.110 10.5.0.111}"
 
 _XDIO_BANNER='   __  __ ______  ____   _____           _       __
@@ -37,15 +38,26 @@ _xdio_apply_static_net() {
 }
 
 _xdio_apply_dns() {
-  if [[ -n "${var_ns:-}" ]]; then
-    return 0
-  fi
   if [[ "${NET:-dhcp}" == "dhcp" || "${NET:-}" == "manual" || -z "${NET:-}" ]]; then
+    unset XDIO_DNS_FULL
     return 0
   fi
-  var_ns="${XDIO_DNS}"
-  NS="-nameserver=${var_ns}"
-  export var_ns NS
+  local dns="${var_ns:-$XDIO_DNS}"
+  [[ -z "$dns" ]] && return 0
+  XDIO_DNS_FULL="$dns"
+  var_ns="$dns"
+  # Eén token voor pct create (community-scripts: $PCT_OPTIONS zonder quotes).
+  NS="-nameserver=$(echo "$dns" | awk '{print $1}')"
+  export var_ns NS XDIO_DNS_FULL
+}
+
+_xdio_pct_create() {
+  _xdio_cs_pct_create "$@"
+  local rc=$?
+  if ((rc == 0)) && [[ -n "${XDIO_DNS_FULL:-}" ]] && [[ "$XDIO_DNS_FULL" == *[[:space:]]* ]]; then
+    pct set "$1" --nameserver "$XDIO_DNS_FULL" >>"${BUILD_LOG:-/dev/null}" 2>&1 || true
+  fi
+  return "$rc"
 }
 
 _xdio_apply_tags() {
@@ -64,6 +76,13 @@ if declare -f base_settings >/dev/null 2>&1; then
     _xdio_apply_static_net
     _xdio_apply_dns
     _xdio_apply_tags
+  }
+fi
+
+if declare -f _pct_create >/dev/null 2>&1; then
+  eval "$(declare -f _pct_create | sed '1s/_pct_create/_xdio_cs_pct_create/')"
+  _pct_create() {
+    _xdio_pct_create "$@"
   }
 fi
 
