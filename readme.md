@@ -8,7 +8,7 @@ Netwerk gebruikt de **community-scripts defaults (DHCP op vmbr0)**. Statisch IP,
 
 | Bestand | Doel |
 |---------|------|
-| `lib/xdio.func` | ASCII-banner (Xdio scripts), tag `xdio-script` |
+| `lib/xdio.func` | Figlet-banner met horizontaal regenboogverloop, tag `xdio-script` |
 
 Elk app-script sourced `lib/xdio.func` **na** `build.func`.
 

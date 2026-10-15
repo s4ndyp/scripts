@@ -15,6 +15,65 @@ read -r -d '' _XDIO_BANNER <<'EOF' || true
                                       |_|
 EOF
 
+# Horizontaal regenboogverloop (truecolor), kolom over volledige bannerbreedte.
+_xdio_rainbow_fg() {
+  local col=$1 max=$2
+  local h r g b s=255 v=255
+  if ((max < 1)); then
+    max=1
+  fi
+  h=$(( col * 360 / max ))
+  local c x f p q t
+  c=$(( h / 60 ))
+  x=$(( h % 60 ))
+  f=$(( x * 255 / 60 ))
+  p=$(( (v * (255 - s)) / 255 ))
+  q=$(( (v * (255 - (s * f / 255))) / 255 ))
+  t=$(( (v * (255 - (s * (255 - f) / 255))) / 255 ))
+  case "$c" in
+  0) r=$v; g=$t; b=$p ;;
+  1) r=$q; g=$v; b=$p ;;
+  2) r=$p; g=$v; b=$t ;;
+  3) r=$p; g=$q; b=$v ;;
+  4) r=$t; g=$p; b=$v ;;
+  *) r=$v; g=$p; b=$q ;;
+  esac
+  printf '\033[38;2;%d;%d;%dm' "$r" "$g" "$b"
+}
+
+_xdio_banner_max_width() {
+  local w=0 ln
+  while IFS= read -r ln; do
+    ((${#ln} > w)) && w=${#ln}
+  done <<< "$_XDIO_BANNER"
+  echo "$w"
+}
+
+_xdio_print_rainbow_banner() {
+  local max_w ch x colored
+  max_w="$(_xdio_banner_max_width)"
+  while IFS= read -r ln || [[ -n "$ln" ]]; do
+    colored=""
+    for ((x = 0; x < ${#ln}; x++)); do
+      ch="${ln:x:1}"
+      if [[ "$ch" == " " ]]; then
+        colored+=" "
+      else
+        colored+="$(_xdio_rainbow_fg "$x" "$max_w")$ch"
+      fi
+    done
+    printf '%b\033[0m\n' "$colored"
+  done <<< "$_XDIO_BANNER"
+}
+
+_xdio_print_banner() {
+  if [[ "${TERM:-}" == "dumb" ]] || [[ ! -t 1 ]]; then
+    printf '%s\n' "$_XDIO_BANNER"
+    return 0
+  fi
+  _xdio_print_rainbow_banner
+}
+
 _xdio_apply_tags() {
   if [[ -n "${TAGS:-}" ]]; then
     TAGS="${TAGS//community-script/xdio-script}"
@@ -38,6 +97,6 @@ header_info() {
   else
     clear 2>/dev/null || true
   fi
-  printf '%s\n' "$_XDIO_BANNER"
+  _xdio_print_banner
   echo "  ${APP:-}"
 }
