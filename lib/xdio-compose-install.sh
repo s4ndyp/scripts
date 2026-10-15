@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Gedeelde GHCR + docker compose install (binnen LXC). Source na community-scripts functions.
 
+# shellcheck source=/dev/null
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-motd.sh")
+
 xdio_ghcr_login() {
   if [[ -n "${GHCR_TOKEN:-}" ]]; then
     msg_info "Logging in to GHCR"

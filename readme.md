@@ -10,6 +10,7 @@ Netwerk gebruikt de **community-scripts defaults (DHCP op vmbr0)**. Statisch IP,
 |---------|------|
 | `lib/xdio.func` | Figlet-banner met horizontaal regenboogverloop, tag `xdio-script` |
 | `lib/xdio-compose-install.sh` | GHCR-login + docker compose pull/up (install-scripts) |
+| `lib/xdio-motd.sh` | LXC-login: “Provided by: **Xdio scripts**” → [s4ndyp/scripts](https://github.com/s4ndyp/scripts) |
 
 Elk app-script sourced `lib/xdio.func` **na** `build.func`.
 
