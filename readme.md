@@ -14,7 +14,11 @@ Bij **Default Install**, **App Defaults** (zonder `var_net`) en **Generated** kr
 
 Zonder `var_ns` zet community-scripts **geen** DNS op de LXC; bij statisch IP is `/etc/resolv.conf` dan vaak leeg of onbruikbaar voor apt/docker. xdio vult daarom bovenstaande DNS in zodra er een statisch IPv4-adres wordt gebruikt.
 
-Zet `var_net` in User/App defaults of kies **Advanced Install** voor DHCP of een ander adres. Uitschakelen: `export XDIO_STATIC_NET=0` vóór het script. Andere DNS: `export XDIO_DNS="10.5.0.110 10.5.0.111"` of `var_ns=...` in defaults.
+Zet `var_net` in User/App defaults of kies **Advanced Install** voor DHCP of een ander adres.
+
+**Terug naar DHCP (geen vast IP/DNS via xdio):** `export XDIO_STATIC_NET=0` vóór het script — dan blijft `var_net` dhcp en wordt er geen xdio-DNS gezet.
+
+Andere DNS: `export XDIO_DNS="10.5.0.110 10.5.0.111"` of `var_ns=...` in defaults (meerdere servers: na `pct create` zet het script `pct set --nameserver "…"`).
 
 **Connectivity test:** de engine pingt **1.1.1.1 / 8.8.8.8** (ICMP). Als je netwerk geen ping naar het internet toelaat, krijg je een waarschuwing terwijl IP/gateway/DNS wél kloppen — de installatie gaat door.
 
