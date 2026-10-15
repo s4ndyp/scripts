@@ -8,28 +8,49 @@ Netwerk gebruikt de **community-scripts defaults (DHCP op vmbr0)**. Statisch IP,
 
 Voer uit in de shell op je **Proxmox-node** (Default Install in het menu):
 
+**WasmMe** (site :80, admin :8080)
+
 ```bash
-# WasmMe — site :80, admin :8080
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/wasmme/wasmme.sh)"
+```
 
-# FinancePro
+**FinancePro**
+
+```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/financepro/financepro.sh)"
+```
 
-# TrackNote
+**TrackNote**
+
+```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/tracknote/tracknote.sh)"
+```
 
-# TinyNote
+**TinyNote**
+
+```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/tinynote/tinynote.sh)"
+```
 
-# AssetVault
+**AssetVault**
+
+```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/assetvault/assetvault.sh)"
 ```
 
-Private **GHCR**-images: log eerst in op de Proxmox-host, daarna hetzelfde commando:
+Private **GHCR**-images: log eerst in op de Proxmox-host:
 
 ```bash
-export GHCR_TOKEN="ghp_..."   # PAT met read:packages
-export GHCR_USERNAME="s4ndyp" # optioneel
+export GHCR_TOKEN="ghp_..."
+```
+
+```bash
+export GHCR_USERNAME="s4ndyp"
+```
+
+Daarna het install-commando van de app, bijvoorbeeld WasmMe:
+
+```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/wasmme/wasmme.sh)"
 ```
 
@@ -88,10 +109,27 @@ cd /opt/wasmme && docker compose pull && docker compose up -d
 
 ## Overige apps — update in de container
 
+**FinancePro**
+
 ```bash
 cd /opt/financepro && docker compose pull && docker compose up -d
+```
+
+**TrackNote**
+
+```bash
 cd /opt/tracknote && docker compose pull && docker compose up -d
+```
+
+**TinyNote**
+
+```bash
 cd /opt/tinynote && docker compose pull && docker compose up -d
+```
+
+**AssetVault**
+
+```bash
 cd /opt/assetvault && docker compose pull && docker compose up -d
 ```
 
