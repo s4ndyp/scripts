@@ -10,8 +10,13 @@ Bij **Default Install**, **App Defaults** (zonder `var_net`) en **Generated** kr
 |------------|--------|
 | IPv4 | `10.5.0.<CTID>/16` (CTID = LXC-nummer) |
 | Gateway | `10.5.0.1` |
+| DNS | `10.5.0.110`, `10.5.0.111` (`pct -nameserver`, tenzij `var_ns` gezet) |
 
-Zet `var_net` in User/App defaults of kies **Advanced Install** voor DHCP of een ander adres. Uitschakelen: `export XDIO_STATIC_NET=0` vóór het script.
+Zonder `var_ns` zet community-scripts **geen** DNS op de LXC; bij statisch IP is `/etc/resolv.conf` dan vaak leeg of onbruikbaar voor apt/docker. xdio vult daarom bovenstaande DNS in zodra er een statisch IPv4-adres wordt gebruikt.
+
+Zet `var_net` in User/App defaults of kies **Advanced Install** voor DHCP of een ander adres. Uitschakelen: `export XDIO_STATIC_NET=0` vóór het script. Andere DNS: `export XDIO_DNS="10.5.0.110 10.5.0.111"` of `var_ns=...` in defaults.
+
+**Connectivity test:** de engine pingt **1.1.1.1 / 8.8.8.8** (ICMP). Als je netwerk geen ping naar het internet toelaat, krijg je een waarschuwing terwijl IP/gateway/DNS wél kloppen — de installatie gaat door.
 
 Optioneel in `default.vars` op de Proxmox-host: `var_gateway=10.5.0.1` (zie `defaults/xdio.vars.example`).
 

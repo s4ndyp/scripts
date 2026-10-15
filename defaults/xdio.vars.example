@@ -5,4 +5,5 @@
 # var_gateway=10.5.0.1
 
 var_gateway=10.5.0.1
+var_ns=10.5.0.110 10.5.0.111
 var_brg=vmbr0

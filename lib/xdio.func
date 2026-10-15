@@ -9,6 +9,8 @@ export XDIO_STATIC_NET="${XDIO_STATIC_NET:-1}"
 export XDIO_NET_PREFIX="${XDIO_NET_PREFIX:-10.5.0}"
 export XDIO_GATEWAY="${XDIO_GATEWAY:-10.5.0.1}"
 export XDIO_NET_CIDR="${XDIO_NET_CIDR:-16}"
+# pct -nameserver (spatie-gescheiden); leeg = host-DHCP of niets bij statisch IP
+export XDIO_DNS="${XDIO_DNS:-10.5.0.110 10.5.0.111}"
 
 _XDIO_BANNER='   __  __ ______  ____   _____           _       __
    \ \/ // __  \/ __ \ / ___/___  ____  (_)___  / /______
@@ -34,6 +36,18 @@ _xdio_apply_static_net() {
   export NET GATE
 }
 
+_xdio_apply_dns() {
+  if [[ -n "${var_ns:-}" ]]; then
+    return 0
+  fi
+  if [[ "${NET:-dhcp}" == "dhcp" || "${NET:-}" == "manual" || -z "${NET:-}" ]]; then
+    return 0
+  fi
+  var_ns="${XDIO_DNS}"
+  NS="-nameserver=${var_ns}"
+  export var_ns NS
+}
+
 _xdio_apply_tags() {
   if [[ -n "${TAGS:-}" ]]; then
     TAGS="${TAGS//community-script/xdio-script}"
@@ -48,6 +62,7 @@ if declare -f base_settings >/dev/null 2>&1; then
   base_settings() {
     _xdio_cs_base_settings "$@"
     _xdio_apply_static_net
+    _xdio_apply_dns
     _xdio_apply_tags
   }
 fi
