@@ -15,6 +15,8 @@ Bij **Default Install**, **App Defaults** (zonder `var_net`) en **Generated** ze
 
 Uitschakelen: `export XDIO_STATIC_NET=0` vóór het script. Andere waarden: `XDIO_NET_PREFIX`, `XDIO_GATEWAY`, `XDIO_DNS`, `XDIO_VLAN`, of `var_*` via **Advanced** / User defaults.
 
+**Branding (Notes + MOTD):** optioneel `XDIO_PROVIDER_NAME`, `XDIO_PROVIDER_GITHUB`, en voor de install-scriptlink in Notes `XDIO_SCRIPT_URL` (anders `…/blob/main/<app>/<app>.sh` in `s4ndyp/scripts`).
+
 ## Proxmox-host — alle scripts
 
 Voer uit in de shell op je **Proxmox-node** (Default Install in het menu):
@@ -99,7 +101,7 @@ Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 1
 
 | Bestand | Doel |
 |---------|------|
-| `lib/xdio.func` | Figlet-banner met horizontaal regenboogverloop, tag `xdio-script` |
+| `lib/xdio.func` | Figlet-banner, tag `xdio-script`, statisch netwerk, Proxmox **Notes** (xdio i.p.v. community-scripts.org) |
 | `lib/xdio-compose-install.sh` | GHCR-login + docker compose pull/up (install-scripts) |
 | `lib/xdio-motd.sh` | LXC-login: “Provided by: **Xdio scripts**” → [s4ndyp/scripts](https://github.com/s4ndyp/scripts) |
 
