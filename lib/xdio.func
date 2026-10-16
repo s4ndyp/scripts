@@ -82,6 +82,10 @@ export XDIO_NET_CIDR="${XDIO_NET_CIDR:-16}"
 export XDIO_DNS="${XDIO_DNS:-10.5.0.110 10.5.0.111}"
 export XDIO_VLAN="${XDIO_VLAN:-5}"
 
+# Proxmox LXC Notes + MOTD (zelfde defaults als lib/xdio-motd.sh)
+export XDIO_PROVIDER_NAME="${XDIO_PROVIDER_NAME:-Xdio scripts}"
+export XDIO_PROVIDER_GITHUB="${XDIO_PROVIDER_GITHUB:-https://github.com/s4ndyp/scripts}"
+
 _xdio_use_static_network() {
   [[ "${XDIO_STATIC_NET}" == "0" ]] && return 1
   case "${METHOD:-}" in
@@ -158,3 +162,130 @@ header_info() {
   _xdio_print_banner
   echo "  ${APP:-}"
 }
+
+# Proxmox UI container description (community-scripts/core description() marketing → xdio)
+_xdio_description_testing_block() {
+  [[ -n "${CS_TESTING_URL:-}" ]] || return 0
+  local _url_html="${CS_TESTING_URL//&/&amp;}"
+  local _label="Report%20feedback"
+  if [[ "$CS_TESTING_URL" =~ /(issues|discussions)/([0-9]+)$ ]]; then
+    _label="Report%20feedback%20%23${BASH_REMATCH[2]}"
+  fi
+  cat <<EOF
+<div align='center'>
+  <p style='margin: 4px 0 12px 0;'>
+    <a href='${_url_html}' target='_blank' rel='noopener noreferrer'>
+      <img src='https://img.shields.io/badge/%E2%9A%A0%EF%B8%8F-TESTING%20BUILD-d97706' alt='Testing build' />
+    </a>
+  </p>
+
+  <p style='margin: 8px 16px; font-size: 13px;'>This script is still being tested.<br/>Without feedback it cannot be finished.</p>
+
+  <p style='margin: 12px 0;'>
+    <a href='${_url_html}' target='_blank' rel='noopener noreferrer'>
+      <img src='https://img.shields.io/badge/%F0%9F%92%AC-${_label}-2ea043' alt='Report feedback' />
+    </a>
+  </p>
+
+  <p style='margin: 8px 16px 16px 16px; font-size: 12px;'>Works, broken, or anything odd &mdash; one line is enough.</p>
+</div>
+EOF
+}
+
+_xdio_build_container_description() {
+  local testing_block="${1:-}"
+  local repo_slug repo_url script_slug script_url provider_name provider_url
+  repo_slug="${REPO_SLUG:-s4ndyp/scripts}"
+  repo_url="https://github.com/${repo_slug}"
+  provider_name="${XDIO_PROVIDER_NAME}"
+  provider_url="${XDIO_PROVIDER_GITHUB:-$repo_url}"
+  script_slug="${SCRIPT_SLUG:-${NSAPP:-$APP}}"
+  script_slug="$(printf '%s' "$script_slug" | tr '[:upper:]' '[:lower:]' | tr -d ' ')"
+  if [[ -n "${XDIO_SCRIPT_URL:-}" ]]; then
+    script_url="${XDIO_SCRIPT_URL}"
+  else
+    script_url="${repo_url}/blob/main/${script_slug}/${script_slug}.sh"
+  fi
+  cat <<EOF
+${testing_block}
+<div align='center'>
+  <p style='margin: 16px 0 8px 0; font-size: 18px; font-weight: 600;'>
+    <a href='${provider_url}' target='_blank' rel='noopener noreferrer' style='text-decoration: none; color: #00617f;'>${provider_name}</a>
+  </p>
+
+  <h2 style='font-size: 24px; margin: 20px 0;'>${APP} LXC</h2>
+
+  <p style='margin: 12px 0;'>
+    <a href='${script_url}' target='_blank' rel='noopener noreferrer'>
+      <img src='https://img.shields.io/badge/%F0%9F%93%9C-Install%20script-00617f' alt='Install script' />
+    </a>
+  </p>
+
+  <span style='margin: 0 10px;'>
+    <i class="fa fa-github fa-fw" style="color: #f5f5f5;"></i>
+    <a href='${repo_url}' target='_blank' rel='noopener noreferrer' style='text-decoration: none; color: #00617f;'>GitHub</a>
+  </span>
+  <span style='margin: 0 10px;'>
+    <i class="fa fa-comments fa-fw" style="color: #f5f5f5;"></i>
+    <a href='${repo_url}/discussions' target='_blank' rel='noopener noreferrer' style='text-decoration: none; color: #00617f;'>Discussions</a>
+  </span>
+  <span style='margin: 0 10px;'>
+    <i class="fa fa-exclamation-circle fa-fw" style="color: #f5f5f5;"></i>
+    <a href='${repo_url}/issues' target='_blank' rel='noopener noreferrer' style='text-decoration: none; color: #00617f;'>Issues</a>
+  </span>
+</div>
+EOF
+}
+
+_xdio_description_finish() {
+  if [[ -n "${CS_TESTING_URL:-}" ]]; then
+    msg_custom "🔗" "${YW}" "Testing build — please report back: ${CS_TESTING_URL}"
+  fi
+
+  if [[ -f /etc/systemd/system/ping-instances.service ]]; then
+    systemctl start ping-instances.service
+  fi
+
+  if [[ -n "${var_post_install:-}" ]]; then
+    local _hook_log_dir="/var/log/community-scripts"
+    local _hook_log="${_hook_log_dir}/post-install-${CTID}.log"
+    mkdir -p "$_hook_log_dir" 2>/dev/null || true
+
+    if [[ ! -f "${var_post_install}" ]]; then
+      msg_error "Post-install hook not found on host: ${var_post_install}"
+      whiptail --backtitle "Proxmox VE Helper Scripts" \
+        --title "POST-INSTALL HOOK FAILED" \
+        --msgbox "The configured post-install hook was not found on the Proxmox host:\n\n${var_post_install}\n\nThe LXC was created successfully, but the hook did NOT run." 14 72 || true
+    else
+      msg_info "Running post-install hook: ${var_post_install}"
+      local _hook_rc=0
+      APP="$APP" NSAPP="${NSAPP:-}" CTID="$CTID" IP="$IP" HN="${HN:-}" \
+        STORAGE="${STORAGE:-}" BRG="${BRG:-}" \
+        bash "${var_post_install}" >"${_hook_log}" 2>&1 || _hook_rc=$?
+      if [[ $_hook_rc -eq 0 ]]; then
+        msg_ok "Post-install hook completed (log: ${_hook_log})"
+      else
+        msg_error "Post-install hook failed (rc=${_hook_rc}) – see ${_hook_log}"
+        local _hook_tail=""
+        _hook_tail="$(tail -n 15 "${_hook_log}" 2>/dev/null || true)"
+        whiptail --backtitle "Proxmox VE Helper Scripts" \
+          --title "POST-INSTALL HOOK FAILED" \
+          --msgbox "Hook exited with code ${_hook_rc}.\n\nScript: ${var_post_install}\nLog:    ${_hook_log}\n\n--- Last log lines ---\n${_hook_tail}\n\nThe LXC itself was created successfully." 22 78 || true
+      fi
+    fi
+  fi
+
+  post_update_to_api "done" "none"
+}
+
+if declare -f description >/dev/null 2>&1; then
+  eval "$(declare -f description | sed '1s/description/_xdio_cs_description/')"
+  description() {
+    IP=$(pct exec "$CTID" ip a s dev eth0 | awk '/inet / {print $2}' | cut -d/ -f1)
+    local _testing_block=""
+    _testing_block="$(_xdio_description_testing_block)"
+    DESCRIPTION="$(_xdio_build_container_description "$_testing_block")"
+    pct set "$CTID" -description "$DESCRIPTION"
+    _xdio_description_finish
+  }
+fi
