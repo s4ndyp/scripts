@@ -61,6 +61,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/dync
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/fileshare/fileshare.sh)"
 ```
 
+Zelfde Proxmox-uitleg voor in [fileshare/readme.md](https://github.com/s4ndyp/fileshare/blob/main/readme.md): [fileshare/README-proxmox-section.md](fileshare/README-proxmox-section.md).
+
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
 ```bash
