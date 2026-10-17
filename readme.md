@@ -71,7 +71,7 @@ Zelfde Proxmox-uitleg voor in [fileshare/readme.md](https://github.com/s4ndyp/fi
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/hermes/hermes.sh)"
 ```
 
-Optioneel vóór install op de host: `HERMES_WEBUI_PASSWORD=…` (anders willekeurig wachtwoord in `~/hermes.creds`). De install draait eerst de **officiële** [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) `install.sh` naar `/opt/hermes-data/hermes-agent` (zelfde als `bootstrap.py`), daarna Docker Web UI. Standaard resources: **2 CPU, 4 GB RAM, 24 GB disk**.
+Optioneel vóór install op de host: `HERMES_WEBUI_PASSWORD=…` (anders willekeurig wachtwoord in `~/hermes.creds`). De install draait eerst de **officiële** [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) `install.sh` (Python **3.14** store onder `/opt/hermes-data/tools/`), zet `HERMES_WEBUI_PYTHON` voor de Docker Web UI (image is Python **3.12** — agent-deps horen niet in `/app/venv` alleen), daarna `docker compose`. Standaard resources: **2 CPU, 4 GB RAM, 24 GB disk**.
 
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 

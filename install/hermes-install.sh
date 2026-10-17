@@ -60,6 +60,14 @@ if [[ "${HERMES_SKIP_AGENT_INSTALL:-0}" != "1" ]]; then
   fi
   chown -R "${HERMES_UID}:${HERMES_GID}" "${HERMES_DATA}"
   msg_ok "Installed Hermes Agent to ${HERMES_DATA}/hermes-agent"
+  HERMES_AGENT_PYTHON_HOST="$(xdio_hermes_resolve_agent_python "${HERMES_DATA}" "${HERMES_RUN_USER}" "${HERMES_INSTALL_HOME}")" || true
+  if [[ -n "${HERMES_AGENT_PYTHON_HOST:-}" ]]; then
+    HERMES_WEBUI_PYTHON="$(xdio_hermes_host_to_container_path "${HERMES_DATA}" "${HERMES_AGENT_PYTHON_HOST}")"
+    msg_ok "Hermes Agent Python: ${HERMES_AGENT_PYTHON_HOST} → container ${HERMES_WEBUI_PYTHON}"
+  else
+    msg_error "Could not find Hermes Agent Python after install (need managed 3.14 runtime). Check ${HERMES_DATA}/logs/install.log"
+    exit 1
+  fi
 else
   msg_info "HERMES_SKIP_AGENT_INSTALL=1 — cloning agent source only"
   rm -rf "${HERMES_DATA}/hermes-agent"
@@ -68,6 +76,15 @@ else
     "${HERMES_DATA}/hermes-agent"
   chown -R "${HERMES_UID}:${HERMES_GID}" "${HERMES_DATA}"
   msg_ok "Cloned Hermes Agent source"
+  HERMES_AGENT_PYTHON_HOST="$(xdio_hermes_resolve_agent_python "${HERMES_DATA}" "${HERMES_RUN_USER}" "${HERMES_INSTALL_HOME}")" || true
+  if [[ -n "${HERMES_AGENT_PYTHON_HOST:-}" ]]; then
+    HERMES_WEBUI_PYTHON="$(xdio_hermes_host_to_container_path "${HERMES_DATA}" "${HERMES_AGENT_PYTHON_HOST}")"
+  fi
+fi
+
+if [[ -z "${HERMES_WEBUI_PYTHON:-}" ]]; then
+  msg_error "No Hermes Agent Python found under ${HERMES_DATA} (WebUI Docker is Python 3.12; chat needs the agent 3.14 runtime from install.sh)."
+  exit 1
 fi
 
 msg_info "Cloning Hermes Web UI (${HERMES_BRANCH})"
@@ -86,6 +103,7 @@ GID=${HERMES_GID}
 HERMES_HOME=${HERMES_DATA}
 HERMES_WORKSPACE=${HERMES_WORKSPACE}
 HERMES_WEBUI_PASSWORD=${HERMES_WEBUI_PASSWORD}
+HERMES_WEBUI_PYTHON=${HERMES_WEBUI_PYTHON:-}
 EOF
 
 sed -i 's/"127\.0\.0\.1:8787:8787"/"80:8787"/' "${HERMES_DIR}/docker-compose.yml"
