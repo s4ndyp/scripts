@@ -65,18 +65,6 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/file
 
 Zelfde Proxmox-uitleg voor in [fileshare/readme.md](https://github.com/s4ndyp/fileshare/blob/main/readme.md): [fileshare/README-proxmox-section.md](fileshare/README-proxmox-section.md).
 
-**Hermes Agent + Web UI** (gebaseerd op [Community Scripts Hermes Agent](https://community-scripts.org/scripts/hermesagent) + native [hermes-webui](https://github.com/nesquena/hermes-webui), **geen Docker build**)
-
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/hermesagent/hermesagent.sh)"
-```
-
-<<<<<<< HEAD
-(`hermes/hermes.sh` is een alias naar hetzelfde script.) Agent via `hermes-agent.nousresearch.com/install.sh` als user `hermes`; Web UI via `ctl.sh` + systemd. Optioneel: `HERMES_WEBUI_PASSWORD`. Na install in de LXC: **`hermes-setup`**. Standaard resources: **2 CPU, 4 GB RAM, 20 GB disk**.
-=======
-Optioneel vóór install op de host: `HERMES_WEBUI_PASSWORD=…` (anders willekeurig wachtwoord in `~/hermes.creds`). De install draait eerst de **officiële** [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) `install.sh` (Python **3.14** store onder `/opt/hermes-data/tools/`), zet `HERMES_WEBUI_PYTHON` voor de Docker Web UI (image is Python **3.12** — agent-deps horen niet in `/app/venv` alleen), daarna `docker compose`. Standaard resources: **2 CPU, 4 GB RAM, 24 GB disk**.
->>>>>>> origin/main
-
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
 ```bash
@@ -93,7 +81,7 @@ Daarna het install-commando van de app, bijvoorbeeld WasmMe:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/wasmme/wasmme.sh)"
 ```
 
-Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk**; Hermes: **2 CPU, 4 GB RAM, 20 GB disk**). Debian 13, unprivileged LXC.
+Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk** — Docker build). Debian 13, unprivileged LXC.
 
 ## Apps
 
@@ -106,7 +94,6 @@ Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 1
 | AssetVault | (nog geen public repo) | `http://<ip>` |
 | DynCompare | [dyncompare](https://github.com/s4ndyp/dyncompare) | `:80` app, `:8080` sync |
 | Fileshare | [fileshare](https://github.com/s4ndyp/fileshare) | `http://<ip>` (git build) |
-| Hermes | [hermes-agent](https://hermes-agent.nousresearch.com/) + [hermes-webui](https://github.com/nesquena/hermes-webui) | `http://<ip>` (Web UI :80 of :8787, wachtwoord in `~/hermes.creds`) |
 
 **AssetVault:** als `s4ndyp/assetvault` nog niet bestaat, gebruikt het install-script een ingebouwde compose (`ghcr.io/s4ndyp/assetvault:latest`).
 
@@ -177,13 +164,5 @@ cd /opt/dyncompare && docker compose pull && docker compose up -d
 ```bash
 cd /opt/fileshare && git pull --ff-only && docker compose build && docker compose up -d
 ```
-
-**Hermes Agent + Web UI**
-
-```bash
-update
-```
-
-Of handmatig: `hermes update --yes` als user `hermes`, daarna `systemctl restart hermes-webui hermes-dashboard`.
 
 Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`).
