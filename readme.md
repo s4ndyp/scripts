@@ -71,7 +71,7 @@ Zelfde Proxmox-uitleg voor in [fileshare/readme.md](https://github.com/s4ndyp/fi
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/hermes/hermes.sh)"
 ```
 
-Optioneel vóór install op de host: `HERMES_WEBUI_PASSWORD=…` (anders willekeurig wachtwoord in `~/hermes.creds` in de LXC). Standaard resources: **2 CPU, 4 GB RAM, 20 GB disk**.
+Optioneel vóór install op de host: `HERMES_WEBUI_PASSWORD=…` (anders willekeurig wachtwoord in `~/hermes.creds`). De install draait eerst de **officiële** [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) `install.sh` naar `/opt/hermes-data/hermes-agent` (zelfde als `bootstrap.py`), daarna Docker Web UI. Standaard resources: **2 CPU, 4 GB RAM, 24 GB disk**.
 
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
@@ -89,7 +89,7 @@ Daarna het install-commando van de app, bijvoorbeeld WasmMe:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/wasmme/wasmme.sh)"
 ```
 
-Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk**; Hermes: **2 CPU, 4 GB RAM, 20 GB disk** — Docker build). Debian 13, unprivileged LXC.
+Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk**; Hermes: **2 CPU, 4 GB RAM, 24 GB disk** — agent + Docker build). Debian 13, unprivileged LXC.
 
 ## Apps
 
@@ -178,6 +178,14 @@ cd /opt/fileshare && git pull --ff-only && docker compose build && docker compos
 
 ```bash
 cd /opt/hermes-webui && git pull --ff-only && docker compose build && docker compose up -d
+```
+
+**Hermes — “AIAgent not available” / `dotenv` / uid 0 ownership** (in de LXC — **niet als root** in de container; gebruik UID uit `.env`, meestal `1000:1000`):
+
+```bash
+cd /opt/hermes-webui
+docker compose exec -T --user 1000:1000 hermes-webui bash -lc 'export HERMES_HOME=/home/hermeswebui/.hermes; rm -f /app/venv/.deps_installed; command -v hermes >/dev/null && hermes pm repair || true; uv pip install --python /app/venv/bin/python -e /home/hermeswebui/.hermes/hermes-agent[all]; /app/venv/bin/python -c "import dotenv; from run_agent import AIAgent; print(\"ok\")"'
+docker compose restart hermes-webui
 ```
 
 Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`).

@@ -19,7 +19,7 @@ APP="Hermes"
 var_tags="${var_tags:-ai;agent;docker}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-4096}"
-var_disk="${var_disk:-20}"
+var_disk="${var_disk:-24}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
 var_arm64="${var_arm64:-yes}"
@@ -39,6 +39,12 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
+  if [[ -d /opt/hermes-data/hermes-agent/.git ]]; then
+    msg_info "Updating Hermes Agent source"
+    cd /opt/hermes-data/hermes-agent
+    $STD git fetch origin
+    $STD git pull --ff-only
+  fi
   msg_info "Updating Hermes Web UI from git"
   cd /opt/hermes-webui
   $STD git fetch origin
@@ -46,6 +52,12 @@ function update_script() {
   msg_info "Rebuilding Hermes image (Patience — first builds can take a while)"
   $STD docker compose build
   $STD docker compose up -d
+  # shellcheck source=/dev/null
+  source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL}/lib/xdio-hermes-docker.sh")
+  if xdio_hermes_wait_for_venv /opt/hermes-webui 60; then
+    msg_info "Relinking Hermes Agent in WebUI Python"
+    xdio_hermes_docker_link_agent /opt/hermes-webui && docker compose -f /opt/hermes-webui/docker-compose.yml restart hermes-webui
+  fi
   msg_ok "Updated Hermes"
   msg_ok "Updated successfully!"
   exit
