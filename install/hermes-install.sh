@@ -49,10 +49,7 @@ HERMES_WEBUI_PASSWORD=${HERMES_WEBUI_PASSWORD}
 EOF
 
 # Expose on all interfaces via LXC port 80 (not localhost-only 8787).
-sed -i \
-  -e 's/127\.0\.0\.1:8787:8787/"80:8787"/' \
-  -e 's/#      - "8787:8787"/      # - "8787:8787"/' \
-  "${HERMES_DIR}/docker-compose.yml"
+sed -i 's/"127\.0\.0\.1:8787:8787"/"80:8787"/' "${HERMES_DIR}/docker-compose.yml"
 msg_ok "Configured Hermes"
 
 msg_info "Building Hermes Docker image (Patience — compiles SQLite in image)"
