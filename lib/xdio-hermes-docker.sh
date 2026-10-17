@@ -1,6 +1,36 @@
 #!/usr/bin/env bash
 # Helpers for Hermes Web UI Docker + agent (s4ndyp/scripts install/update).
 
+# Return passwd name for HERMES_UID (create hermes-install if missing). Requires getent + runuser.
+xdio_hermes_ensure_run_user() {
+  local uid="${1:-1000}"
+  local gid="${2:-1000}"
+  local home="${3:-/var/lib/hermes-install}"
+  local user gname
+
+  user="$(getent passwd | awk -F: -v u="$uid" '$3 == u { print $1; exit }')"
+  if [[ -n "$user" ]]; then
+    printf '%s' "$user"
+    return 0
+  fi
+
+  gname="$(getent group | awk -F: -v g="$gid" '$3 == g { print $1; exit }')"
+  if [[ -z "$gname" ]]; then
+    groupadd -g "$gid" hermes-install 2>/dev/null || groupadd hermes-install 2>/dev/null || true
+    gname="$(getent group | awk -F: -v g="$gid" '$3 == g { print $1; exit }')"
+    gname="${gname:-hermes-install}"
+  fi
+
+  user="hermes-install"
+  if ! useradd -u "$uid" -g "$gname" -d "$home" -m -s /bin/bash "$user" 2>/dev/null; then
+    useradd -u "$uid" -g "$gname" -d "$home" -M -s /bin/bash "$user" \
+      || useradd -u "$uid" -d "$home" -M -s /bin/bash "$user" \
+      || return 1
+  fi
+  install -d -o "$uid" -g "$gid" "$home" 2>/dev/null || install -d -o "$uid" "$home"
+  printf '%s' "$user"
+}
+
 xdio_hermes_read_runtime_ids() {
   local app_dir="$1"
   local uid gid
