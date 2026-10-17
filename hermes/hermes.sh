@@ -52,6 +52,12 @@ function update_script() {
   msg_info "Rebuilding Hermes image (Patience — first builds can take a while)"
   $STD docker compose build
   $STD docker compose up -d
+  # shellcheck source=/dev/null
+  source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL}/lib/xdio-hermes-docker.sh")
+  if xdio_hermes_wait_for_venv /opt/hermes-webui 60; then
+    msg_info "Relinking Hermes Agent in WebUI Python"
+    xdio_hermes_docker_link_agent /opt/hermes-webui && docker compose -f /opt/hermes-webui/docker-compose.yml restart hermes-webui
+  fi
   msg_ok "Updated Hermes"
   msg_ok "Updated successfully!"
   exit

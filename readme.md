@@ -180,4 +180,12 @@ cd /opt/fileshare && git pull --ff-only && docker compose build && docker compos
 cd /opt/hermes-webui && git pull --ff-only && docker compose build && docker compose up -d
 ```
 
+**Hermes — “AIAgent not available”** (in de LXC, agent editable in WebUI-venv):
+
+```bash
+cd /opt/hermes-webui
+docker compose exec -T hermes-webui bash -lc 'rm -f /app/venv/.deps_installed; uv pip install --python /app/venv/bin/python -e /home/hermeswebui/.hermes/hermes-agent[all]; /app/venv/bin/python -c "from run_agent import AIAgent; print(\"ok\")"'
+docker compose restart hermes-webui
+```
+
 Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`).

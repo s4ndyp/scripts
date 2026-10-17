@@ -4,6 +4,8 @@
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 # shellcheck source=/dev/null
 source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-motd.sh")
+# shellcheck source=/dev/null
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-hermes-docker.sh")
 color
 verb_ip6
 catch_errors
@@ -31,20 +33,30 @@ mkdir -p "${HERMES_DATA}" "${HERMES_WORKSPACE}" "${HERMES_DATA}/logs"
 chown -R "${HERMES_UID}:${HERMES_GID}" "${HERMES_DATA}" "${HERMES_WORKSPACE}"
 msg_ok "Prepared Hermes data directories"
 
+HERMES_INSTALL_HOME="/var/lib/hermes-install"
+if ! id -u "${HERMES_UID}" >/dev/null 2>&1; then
+  groupadd -g "${HERMES_GID}" hermes 2>/dev/null || true
+  useradd -u "${HERMES_UID}" -g "${HERMES_GID}" -d "${HERMES_INSTALL_HOME}" -m -s /bin/bash hermes 2>/dev/null \
+    || useradd -u "${HERMES_UID}" -d "${HERMES_INSTALL_HOME}" -m -s /bin/bash hermes
+fi
+install -d -o "${HERMES_UID}" -g "${HERMES_GID}" "${HERMES_INSTALL_HOME}"
+
 if [[ "${HERMES_SKIP_AGENT_INSTALL:-0}" != "1" ]]; then
-  msg_info "Installing Hermes Agent (official NousResearch installer — same as bootstrap.py)"
-  export HERMES_HOME="${HERMES_DATA}"
-  export HERMES_INSTALL_DIR="${HERMES_DATA}/hermes-agent"
+  msg_info "Installing Hermes Agent as UID ${HERMES_UID} (official NousResearch installer)"
   _agent_install_flags=(--non-interactive --skip-browser --skip-computer-use)
   if [[ -n "${HERMES_INSTALL_CHANNEL:-}" ]]; then
     _agent_install_flags+=(--channel "${HERMES_INSTALL_CHANNEL}")
   fi
-  if ! curl -fsSL "${HERMES_AGENT_INSTALL_URL}" | bash -s -- "${_agent_install_flags[@]}"; then
-    msg_error "Hermes Agent install failed. Logs: ${HERMES_DATA}/logs/install.log — retry with more RAM/disk or set HERMES_SKIP_AGENT_INSTALL=1 for a source-only clone (not recommended)."
+  if ! runuser -u "#${HERMES_UID}" -- env \
+    HERMES_HOME="${HERMES_DATA}" \
+    HERMES_INSTALL_DIR="${HERMES_DATA}/hermes-agent" \
+    HOME="/home/hermes" \
+    bash -c "curl -fsSL '${HERMES_AGENT_INSTALL_URL}' | bash -s -- ${_agent_install_flags[*]}"; then
+    msg_error "Hermes Agent install failed. Logs: ${HERMES_DATA}/logs/install.log"
     exit 1
   fi
-  if [[ ! -f "${HERMES_DATA}/hermes-agent/run_agent.py" ]]; then
-    msg_error "Hermes Agent checkout missing run_agent.py at ${HERMES_DATA}/hermes-agent"
+  if [[ ! -f "${HERMES_DATA}/hermes-agent/run_agent.py" ]] || [[ ! -f "${HERMES_DATA}/hermes-agent/agent/__init__.py" ]]; then
+    msg_error "Hermes Agent checkout incomplete at ${HERMES_DATA}/hermes-agent (need run_agent.py and agent/)"
     exit 1
   fi
   chown -R "${HERMES_UID}:${HERMES_GID}" "${HERMES_DATA}"
@@ -52,7 +64,7 @@ if [[ "${HERMES_SKIP_AGENT_INSTALL:-0}" != "1" ]]; then
 else
   msg_info "HERMES_SKIP_AGENT_INSTALL=1 — cloning agent source only"
   rm -rf "${HERMES_DATA}/hermes-agent"
-  $STD git clone --depth 1 --branch "${HERMES_AGENT_BRANCH:-main}" \
+  runuser -u "#${HERMES_UID}" -- git clone --depth 1 --branch "${HERMES_AGENT_BRANCH:-main}" \
     "${HERMES_AGENT_REPO_URL:-https://github.com/NousResearch/hermes-agent.git}" \
     "${HERMES_DATA}/hermes-agent"
   chown -R "${HERMES_UID}:${HERMES_GID}" "${HERMES_DATA}"
@@ -78,6 +90,7 @@ HERMES_WEBUI_PASSWORD=${HERMES_WEBUI_PASSWORD}
 EOF
 
 sed -i 's/"127\.0\.0\.1:8787:8787"/"80:8787"/' "${HERMES_DIR}/docker-compose.yml"
+xdio_hermes_patch_compose_env "${HERMES_DIR}/docker-compose.yml"
 msg_ok "Configured Hermes"
 
 msg_info "Building Hermes Docker image (Patience — compiles SQLite in image)"
@@ -88,9 +101,19 @@ if ! $STD docker compose build; then
 fi
 msg_ok "Built Hermes image"
 
-msg_info "Starting Hermes Web UI"
+msg_info "Starting Hermes Web UI (first boot installs WebUI + agent Python deps — long)"
 $STD docker compose up -d
-msg_ok "Started Hermes Web UI"
+if ! xdio_hermes_wait_for_venv "${HERMES_DIR}"; then
+  msg_error "Hermes container did not finish initializing /app/venv (check: docker compose logs -f)"
+  exit 1
+fi
+msg_info "Linking Hermes Agent into WebUI Python (pip install -e)"
+if ! xdio_hermes_docker_link_agent "${HERMES_DIR}"; then
+  msg_error "Could not import AIAgent in the WebUI container. See docs/troubleshooting.md in hermes-webui."
+  exit 1
+fi
+$STD docker compose restart hermes-webui
+msg_ok "Started Hermes Web UI with agent linked"
 
 cat <<EOF >~/hermes.creds
 Hermes Web UI
