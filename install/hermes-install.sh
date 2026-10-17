@@ -24,8 +24,8 @@ HERMES_AGENT_INSTALL_URL="${HERMES_AGENT_INSTALL_URL:-https://raw.githubusercont
 
 setup_docker
 
-msg_info "Installing prerequisites (git, curl)"
-$STD apt install -y git curl ca-certificates
+msg_info "Installing prerequisites (git, curl, runuser)"
+$STD apt install -y git curl ca-certificates util-linux
 msg_ok "Installed prerequisites"
 
 msg_info "Preparing Hermes data directories"
@@ -34,23 +34,22 @@ chown -R "${HERMES_UID}:${HERMES_GID}" "${HERMES_DATA}" "${HERMES_WORKSPACE}"
 msg_ok "Prepared Hermes data directories"
 
 HERMES_INSTALL_HOME="/var/lib/hermes-install"
-if ! id -u "${HERMES_UID}" >/dev/null 2>&1; then
-  groupadd -g "${HERMES_GID}" hermes 2>/dev/null || true
-  useradd -u "${HERMES_UID}" -g "${HERMES_GID}" -d "${HERMES_INSTALL_HOME}" -m -s /bin/bash hermes 2>/dev/null \
-    || useradd -u "${HERMES_UID}" -d "${HERMES_INSTALL_HOME}" -m -s /bin/bash hermes
-fi
-install -d -o "${HERMES_UID}" -g "${HERMES_GID}" "${HERMES_INSTALL_HOME}"
+HERMES_RUN_USER="$(xdio_hermes_ensure_run_user "${HERMES_UID}" "${HERMES_GID}" "${HERMES_INSTALL_HOME}")" || {
+  msg_error "Could not create or resolve a system user for UID ${HERMES_UID} (needed for Hermes Agent install)."
+  exit 1
+}
+msg_ok "Hermes Agent install will run as user ${HERMES_RUN_USER} (uid ${HERMES_UID})"
 
 if [[ "${HERMES_SKIP_AGENT_INSTALL:-0}" != "1" ]]; then
-  msg_info "Installing Hermes Agent as UID ${HERMES_UID} (official NousResearch installer)"
+  msg_info "Installing Hermes Agent as ${HERMES_RUN_USER} (official NousResearch installer)"
   _agent_install_flags=(--non-interactive --skip-browser --skip-computer-use)
   if [[ -n "${HERMES_INSTALL_CHANNEL:-}" ]]; then
     _agent_install_flags+=(--channel "${HERMES_INSTALL_CHANNEL}")
   fi
-  if ! runuser -u "#${HERMES_UID}" -- env \
+  if ! runuser -u "${HERMES_RUN_USER}" -- env \
     HERMES_HOME="${HERMES_DATA}" \
     HERMES_INSTALL_DIR="${HERMES_DATA}/hermes-agent" \
-    HOME="/home/hermes" \
+    HOME="${HERMES_INSTALL_HOME}" \
     bash -c "curl -fsSL '${HERMES_AGENT_INSTALL_URL}' | bash -s -- ${_agent_install_flags[*]}"; then
     msg_error "Hermes Agent install failed. Logs: ${HERMES_DATA}/logs/install.log"
     exit 1
@@ -64,7 +63,7 @@ if [[ "${HERMES_SKIP_AGENT_INSTALL:-0}" != "1" ]]; then
 else
   msg_info "HERMES_SKIP_AGENT_INSTALL=1 — cloning agent source only"
   rm -rf "${HERMES_DATA}/hermes-agent"
-  runuser -u "#${HERMES_UID}" -- git clone --depth 1 --branch "${HERMES_AGENT_BRANCH:-main}" \
+  runuser -u "${HERMES_RUN_USER}" -- git clone --depth 1 --branch "${HERMES_AGENT_BRANCH:-main}" \
     "${HERMES_AGENT_REPO_URL:-https://github.com/NousResearch/hermes-agent.git}" \
     "${HERMES_DATA}/hermes-agent"
   chown -R "${HERMES_UID}:${HERMES_GID}" "${HERMES_DATA}"
