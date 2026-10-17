@@ -65,6 +65,14 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/file
 
 Zelfde Proxmox-uitleg voor in [fileshare/readme.md](https://github.com/s4ndyp/fileshare/blob/main/readme.md): [fileshare/README-proxmox-section.md](fileshare/README-proxmox-section.md).
 
+**Hermes** (Web UI + agent in één container, build uit git — [nesquena/hermes-webui](https://github.com/nesquena/hermes-webui))
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/hermes/hermes.sh)"
+```
+
+Optioneel vóór install op de host: `HERMES_WEBUI_PASSWORD=…` (anders willekeurig wachtwoord in `~/hermes.creds` in de LXC). Standaard resources: **2 CPU, 4 GB RAM, 20 GB disk**.
+
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
 ```bash
@@ -81,7 +89,7 @@ Daarna het install-commando van de app, bijvoorbeeld WasmMe:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/wasmme/wasmme.sh)"
 ```
 
-Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk** — Docker build). Debian 13, unprivileged LXC.
+Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk**; Hermes: **2 CPU, 4 GB RAM, 20 GB disk** — Docker build). Debian 13, unprivileged LXC.
 
 ## Apps
 
@@ -94,6 +102,7 @@ Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 1
 | AssetVault | (nog geen public repo) | `http://<ip>` |
 | DynCompare | [dyncompare](https://github.com/s4ndyp/dyncompare) | `:80` app, `:8080` sync |
 | Fileshare | [fileshare](https://github.com/s4ndyp/fileshare) | `http://<ip>` (git build) |
+| Hermes | [hermes-webui](https://github.com/nesquena/hermes-webui) | `http://<ip>` (Web UI, wachtwoord in `~/hermes.creds`) |
 
 **AssetVault:** als `s4ndyp/assetvault` nog niet bestaat, gebruikt het install-script een ingebouwde compose (`ghcr.io/s4ndyp/assetvault:latest`).
 
@@ -163,6 +172,12 @@ cd /opt/dyncompare && docker compose pull && docker compose up -d
 
 ```bash
 cd /opt/fileshare && git pull --ff-only && docker compose build && docker compose up -d
+```
+
+**Hermes** (git pull + rebuild)
+
+```bash
+cd /opt/hermes-webui && git pull --ff-only && docker compose build && docker compose up -d
 ```
 
 Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`).
