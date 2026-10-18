@@ -89,7 +89,7 @@ Daarna het install-commando van de app, bijvoorbeeld WasmMe:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/wasmme/wasmme.sh)"
 ```
 
-Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk** — Docker build). Debian 13, unprivileged LXC.
+Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk**; BackAI: **2 CPU, 2 GB RAM, 12 GB disk**). Debian 13, unprivileged LXC.
 
 ## Apps
 
@@ -102,6 +102,7 @@ Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 1
 | AssetVault | (nog geen public repo) | `http://<ip>` |
 | DynCompare | [dyncompare](https://github.com/s4ndyp/dyncompare) | `:80` app, `:8080` sync |
 | Fileshare | [fileshare](https://github.com/s4ndyp/fileshare) | `http://<ip>` (git build) |
+| BackAI | [backai](https://github.com/s4ndyp/backai) | `http://<ip>` (dashboard, agent key in `~/backai.creds`) |
 
 **AssetVault:** als `s4ndyp/assetvault` nog niet bestaat, gebruikt het install-script een ingebouwde compose (`ghcr.io/s4ndyp/assetvault:latest`).
 
@@ -171,6 +172,12 @@ cd /opt/dyncompare && docker compose pull && docker compose up -d
 
 ```bash
 cd /opt/fileshare && git pull --ff-only && docker compose build && docker compose up -d
+```
+
+**BackAI**
+
+```bash
+cd /opt/backai && docker compose pull && docker compose up -d
 ```
 
 Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`).
