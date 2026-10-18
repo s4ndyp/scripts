@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# BackAI server stack — deploy/docker-compose.yml from s4ndyp/backai (GHCR).
+# BackAI — PocketBase stack (deploy/docker-compose.yml from s4ndyp/backai, GHCR).
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 # shellcheck source=/dev/null
@@ -14,29 +14,25 @@ network_check
 update_os
 
 APP_DIR="/opt/backai"
-DEPLOY_BASE="${BACKAI_DEPLOY_URL:-https://raw.githubusercontent.com/s4ndyp/backai/main/deploy}"
+COMPOSE_URL="${BACKAI_COMPOSE_URL:-${BACKAI_DEPLOY_URL:-https://raw.githubusercontent.com/s4ndyp/backai/main/deploy}/docker-compose.yml}"
 
 setup_docker
 xdio_ghcr_login
 
 msg_info "Preparing BackAI stack"
 mkdir -p "${APP_DIR}"
-curl -fsSL "${DEPLOY_BASE}/docker-compose.yml" -o "${APP_DIR}/docker-compose.yml"
+curl -fsSL "${COMPOSE_URL}" -o "${APP_DIR}/docker-compose.yml"
 msg_ok "Prepared BackAI stack"
 
-POSTGRES_PASSWORD="${BACKAI_POSTGRES_PASSWORD:-$(random_password 24)}"
-BACKAI_SESSION_SECRET="${BACKAI_SESSION_SECRET:-$(random_password 32)}"
 BACKAI_AGENT_REGISTER_KEY="${BACKAI_AGENT_REGISTER_KEY:-$(random_password 24)}"
 BACKAI_HTTP_PORT="${BACKAI_HTTP_PORT:-80}"
 BACKAI_IMAGE="${BACKAI_IMAGE:-ghcr.io/s4ndyp/backai:latest}"
 
 msg_info "Writing BackAI environment"
 cat >"${APP_DIR}/.env" <<EOF
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-BACKAI_SESSION_SECRET=${BACKAI_SESSION_SECRET}
-BACKAI_AGENT_REGISTER_KEY=${BACKAI_AGENT_REGISTER_KEY}
 BACKAI_HTTP_PORT=${BACKAI_HTTP_PORT}
 BACKAI_IMAGE=${BACKAI_IMAGE}
+BACKAI_AGENT_REGISTER_KEY=${BACKAI_AGENT_REGISTER_KEY}
 EOF
 chmod 600 "${APP_DIR}/.env"
 msg_ok "Configured BackAI (.env in ${APP_DIR})"
@@ -53,18 +49,22 @@ msg_info "Starting BackAI"
 $STD docker compose up -d
 msg_ok "Started BackAI"
 
+DASHBOARD_URL="http://${LOCAL_IP}"
+if [[ "${BACKAI_HTTP_PORT}" != "80" ]]; then
+  DASHBOARD_URL="http://${LOCAL_IP}:${BACKAI_HTTP_PORT}"
+fi
+
 cat <<EOF >~/backai.creds
 BackAI
 ======
-Dashboard:    http://${LOCAL_IP}
+Dashboard:    ${DASHBOARD_URL}
+PocketBase:   ${DASHBOARD_URL}/_/  (optioneel admin)
 Compose:      ${APP_DIR}/docker-compose.yml
 Env file:     ${APP_DIR}/.env
 
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-BACKAI_SESSION_SECRET=${BACKAI_SESSION_SECRET}
 BACKAI_AGENT_REGISTER_KEY=${BACKAI_AGENT_REGISTER_KEY}
 
-Agents: set BACKAI_SERVER_URL=http://${LOCAL_IP} and BACKAI_AGENT_REGISTER_KEY (above) on first run.
+Agents: BACKAI_SERVER_URL=${DASHBOARD_URL} and BACKAI_AGENT_REGISTER_KEY (above) on first run.
 See: https://github.com/s4ndyp/backai/blob/main/README.md
 EOF
 chmod 600 ~/backai.creds
