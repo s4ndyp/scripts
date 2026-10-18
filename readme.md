@@ -65,6 +65,14 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/file
 
 Zelfde Proxmox-uitleg voor in [fileshare/readme.md](https://github.com/s4ndyp/fileshare/blob/main/readme.md): [fileshare/README-proxmox-section.md](fileshare/README-proxmox-section.md).
 
+**BackAI** (backup control plane, GHCR — [s4ndyp/backai](https://github.com/s4ndyp/backai))
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/backai/backai.sh)"
+```
+
+Optioneel vóór install: `GHCR_TOKEN` (private image), of vaste secrets via `BACKAI_POSTGRES_PASSWORD`, `BACKAI_SESSION_SECRET`, `BACKAI_AGENT_REGISTER_KEY`. Standaard resources: **2 CPU, 2 GB RAM, 12 GB disk**.
+
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
 ```bash
