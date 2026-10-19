@@ -73,6 +73,14 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/back
 
 Optioneel vóór install: `GHCR_TOKEN` (private image), of `BACKAI_AGENT_REGISTER_KEY` / `BACKAI_HTTP_PORT` (default host-poort **80** → UI op `http://<ip>`; upstream default is 8090). Standaard resources: **2 CPU, 2 GB RAM, 8 GB disk** (PocketBase + SQLite, geen Postgres).
 
+**Sync-MS** (Syncthing management dashboard, GHCR — [s4ndyp/sync-ms](https://github.com/s4ndyp/sync-ms))
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/sync-ms/sync-ms.sh)"
+```
+
+Optioneel: `GHCR_TOKEN`, `SYNCMS_HTTP_PORT` (default **80**), `SYNCMS_SAMPLE_INTERVAL_SEC`, `SYNCMS_RETENTION_DAYS`. Geen app-login — alleen vertrouwd netwerk of reverse proxy.
+
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
 ```bash
@@ -103,6 +111,7 @@ Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 1
 | DynCompare | [dyncompare](https://github.com/s4ndyp/dyncompare) | `:80` app, `:8080` sync |
 | Fileshare | [fileshare](https://github.com/s4ndyp/fileshare) | `http://<ip>` (git build) |
 | BackAI | [backai](https://github.com/s4ndyp/backai) | `http://<ip>` (PocketBase; agent key in `~/backai.creds`) |
+| Sync-MS | [sync-ms](https://github.com/s4ndyp/sync-ms) | `http://<ip>` (Syncthing dashboard; `~/sync-ms.creds`) |
 
 **AssetVault:** als `s4ndyp/assetvault` nog niet bestaat, gebruikt het install-script een ingebouwde compose (`ghcr.io/s4ndyp/assetvault:latest`).
 
@@ -180,4 +189,10 @@ cd /opt/fileshare && git pull --ff-only && docker compose build && docker compos
 cd /opt/backai && docker compose pull && docker compose up -d
 ```
 
-Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`).
+**Sync-MS**
+
+```bash
+cd /opt/sync-ms && docker compose pull && docker compose up -d
+```
+
+Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`, `~/sync-ms.creds`).
