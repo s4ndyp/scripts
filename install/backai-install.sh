@@ -2,16 +2,15 @@
 # BackAI — PocketBase stack (deploy/docker-compose.yml from s4ndyp/backai, GHCR).
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
-# shellcheck source=/dev/null
-source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-motd.sh")
-# shellcheck source=/dev/null
-source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-compose-install.sh")
 color
 verb_ip6
 catch_errors
 setting_up_container
 network_check
 update_os
+
+# shellcheck source=/dev/null
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-compose-install.sh")
 
 APP_DIR="/opt/backai"
 COMPOSE_URL="${BACKAI_COMPOSE_URL:-${BACKAI_DEPLOY_URL:-https://raw.githubusercontent.com/s4ndyp/backai/main/deploy}/docker-compose.yml}"
@@ -22,15 +21,15 @@ xdio_ghcr_login
 msg_info "Preparing BackAI stack"
 mkdir -p "${APP_DIR}"
 curl -fsSL "${COMPOSE_URL}" -o "${APP_DIR}/docker-compose.yml"
+BACKAI_HTTP_PORT="${BACKAI_HTTP_PORT:-80}"
+xdio_compose_set_host_port "${APP_DIR}/docker-compose.yml" "${BACKAI_HTTP_PORT}" 8090
 msg_ok "Prepared BackAI stack"
 
 BACKAI_AGENT_REGISTER_KEY="${BACKAI_AGENT_REGISTER_KEY:-$(random_password 24)}"
-BACKAI_HTTP_PORT="${BACKAI_HTTP_PORT:-80}"
 BACKAI_IMAGE="${BACKAI_IMAGE:-ghcr.io/s4ndyp/backai:latest}"
 
 msg_info "Writing BackAI environment"
 cat >"${APP_DIR}/.env" <<EOF
-BACKAI_HTTP_PORT=${BACKAI_HTTP_PORT}
 BACKAI_IMAGE=${BACKAI_IMAGE}
 BACKAI_AGENT_REGISTER_KEY=${BACKAI_AGENT_REGISTER_KEY}
 EOF

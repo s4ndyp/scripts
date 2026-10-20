@@ -16,6 +16,8 @@ else
 fi
 
 APP="Sync-MS"
+export NSAPP="${NSAPP:-sync-ms}"
+export SCRIPT_SLUG="${SCRIPT_SLUG:-sync-ms}"
 var_tags="${var_tags:-syncthing;docker}"
 var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-1024}"

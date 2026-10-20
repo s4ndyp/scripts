@@ -4,6 +4,16 @@
 # shellcheck source=/dev/null
 source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-motd.sh")
 
+# Args: compose_file host_port [container_port=8090]
+# Rewrites literal "8096:8090" and compose env forms like "${VAR:-8096}:8090".
+xdio_compose_set_host_port() {
+  local file="$1" host_port="$2" container_port="${3:-8090}"
+  sed -i -E \
+    -e "s/^[[:space:]]*- \"[0-9]+:${container_port}\"/    - \"${host_port}:${container_port}\"/" \
+    -e "s/^[[:space:]]*- \"\\\$\{[A-Za-z_][A-Za-z0-9_]*:-[0-9]+\}:${container_port}\"/    - \"${host_port}:${container_port}\"/" \
+    "$file"
+}
+
 xdio_ghcr_login() {
   if [[ -n "${GHCR_TOKEN:-}" ]]; then
     msg_info "Logging in to GHCR"
@@ -31,7 +41,7 @@ xdio_install_compose_stack() {
   mkdir -p "${app_dir}"
   curl -fsSL "${compose_url}" -o "${app_dir}/docker-compose.yml"
   if [[ "$host_port" != "keep" ]]; then
-    sed -i -E "s/^[[:space:]]*- \"[0-9]+:([0-9]+)\"/    - \"${host_port}:\\1\"/" "${app_dir}/docker-compose.yml"
+    xdio_compose_set_host_port "${app_dir}/docker-compose.yml" "$host_port"
   fi
   msg_ok "Prepared ${app_label} stack"
 
