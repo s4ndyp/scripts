@@ -16,6 +16,8 @@ else
 fi
 
 APP="BackAI"
+export NSAPP="${NSAPP:-backai}"
+export SCRIPT_SLUG="${SCRIPT_SLUG:-backai}"
 var_tags="${var_tags:-backup;docker}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
