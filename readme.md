@@ -89,6 +89,14 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/webt
 
 Optioneel: `GHCR_TOKEN`, `WEBTOOL_PORT` (default host-poort **80** → portal op `http://<ip>`). Standaard resources: **1 CPU, 1 GB RAM, 8 GB disk**.
 
+**Snapzilla** (screenshot gallery + analyzer, GHCR — [s4ndyp/snapzilla](https://github.com/s4ndyp/snapzilla))
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/snapzilla/snapzilla.sh)"
+```
+
+Git clone voor PocketBase-migraties; **geen Docker build** in de LXC (`ghcr.io/s4ndyp/snapzilla-web` + `snapzilla-analyzer`). Optioneel: `GHCR_TOKEN`, `SNAPZILLA_PORT` (default **80**). Standaard: **2 CPU, 2 GB RAM, 12 GB disk**.
+
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
 ```bash
@@ -105,7 +113,7 @@ Daarna het install-commando van de app, bijvoorbeeld WasmMe:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/wasmme/wasmme.sh)"
 ```
 
-Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk**; BackAI: **2 CPU, 2 GB RAM, 8 GB disk**). Debian 13, unprivileged LXC.
+Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk**; BackAI: **2 CPU, 2 GB RAM, 8 GB disk**; Snapzilla: **2 CPU, 2 GB RAM, 12 GB disk**). Debian 13, unprivileged LXC.
 
 ## Apps
 
@@ -121,6 +129,7 @@ Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 1
 | BackAI | [backai](https://github.com/s4ndyp/backai) | `http://<ip>` (PocketBase; agent key in `~/backai.creds`) |
 | Sync-MS | [sync-ms](https://github.com/s4ndyp/sync-ms) | `http://<ip>` (Syncthing dashboard; `~/sync-ms.creds`) |
 | Webtool | [webtool](https://github.com/s4ndyp/webtool) | `http://<ip>` (subsite-portal; `~/webtool.creds`) |
+| Snapzilla | [snapzilla](https://github.com/s4ndyp/snapzilla) | `http://<ip>` (gallery; PB admin `/_/`) |
 
 **AssetVault:** als `s4ndyp/assetvault` nog niet bestaat, gebruikt het install-script een ingebouwde compose (`ghcr.io/s4ndyp/assetvault:latest`).
 
@@ -130,6 +139,7 @@ Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 1
 |---------|------|
 | `lib/xdio.func` | Figlet-banner, tag `xdio-script`, statisch netwerk, Proxmox **Notes** (xdio i.p.v. community-scripts.org) |
 | `lib/xdio-compose-install.sh` | GHCR-login + docker compose pull/up (install-scripts) |
+| `lib/xdio-snapzilla-install.sh` | Snapzilla: compose patch (GHCR i.p.v. build) + update helper |
 | `lib/xdio-motd.sh` | LXC-login: “Provided by: **Xdio scripts**” → [s4ndyp/scripts](https://github.com/s4ndyp/scripts) |
 
 Elk app-script sourced `lib/xdio.func` **na** `build.func`.
@@ -210,4 +220,10 @@ cd /opt/sync-ms && docker compose pull && docker compose up -d
 cd /opt/webtool && docker compose pull && docker compose up -d
 ```
 
-Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`, `~/sync-ms.creds`, `~/webtool.creds`).
+**Snapzilla** (git pull + images)
+
+```bash
+cd /opt/snapzilla && git pull --ff-only && docker compose pull && docker compose up -d
+```
+
+Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`, `~/sync-ms.creds`, `~/webtool.creds`, `~/snapzilla.creds`).
