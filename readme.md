@@ -81,6 +81,14 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/sync
 
 Optioneel: `GHCR_TOKEN`, `SYNCMS_HTTP_PORT` (default **80**), `SYNCMS_SAMPLE_INTERVAL_SEC`, `SYNCMS_RETENTION_DAYS`. Geen app-login — alleen vertrouwd netwerk of reverse proxy.
 
+**Webtool** (subsite-portal, static uploads + PocketBase, GHCR — [s4ndyp/webtool](https://github.com/s4ndyp/webtool))
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/webtool/webtool.sh)"
+```
+
+Optioneel: `GHCR_TOKEN`, `WEBTOOL_PORT` (default host-poort **80** → portal op `http://<ip>`). Standaard resources: **1 CPU, 1 GB RAM, 8 GB disk**.
+
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
 ```bash
@@ -112,6 +120,7 @@ Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 1
 | Fileshare | [fileshare](https://github.com/s4ndyp/fileshare) | `http://<ip>` (git build) |
 | BackAI | [backai](https://github.com/s4ndyp/backai) | `http://<ip>` (PocketBase; agent key in `~/backai.creds`) |
 | Sync-MS | [sync-ms](https://github.com/s4ndyp/sync-ms) | `http://<ip>` (Syncthing dashboard; `~/sync-ms.creds`) |
+| Webtool | [webtool](https://github.com/s4ndyp/webtool) | `http://<ip>` (subsite-portal; `~/webtool.creds`) |
 
 **AssetVault:** als `s4ndyp/assetvault` nog niet bestaat, gebruikt het install-script een ingebouwde compose (`ghcr.io/s4ndyp/assetvault:latest`).
 
@@ -195,4 +204,10 @@ cd /opt/backai && docker compose pull && docker compose up -d
 cd /opt/sync-ms && docker compose pull && docker compose up -d
 ```
 
-Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`, `~/sync-ms.creds`).
+**Webtool**
+
+```bash
+cd /opt/webtool && docker compose pull && docker compose up -d
+```
+
+Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`, `~/sync-ms.creds`, `~/webtool.creds`).
