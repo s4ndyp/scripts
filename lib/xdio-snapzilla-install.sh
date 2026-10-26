@@ -3,25 +3,48 @@
 
 SNAPZILLA_WEB_IMAGE="${SNAPZILLA_WEB_IMAGE:-ghcr.io/s4ndyp/snapzilla-web:latest}"
 SNAPZILLA_ANALYZER_IMAGE="${SNAPZILLA_ANALYZER_IMAGE:-ghcr.io/s4ndyp/snapzilla-analyzer:latest}"
-SNAPZILLA_OCR_IMAGE="${SNAPZILLA_OCR_IMAGE:-gunthercox/ocr-service:2.0.1-tesseract}"
+
+snapzilla_env_set() {
+  local file="$1" key="$2" value="$3"
+  grep -v "^${key}=" "$file" >"${file}.new" 2>/dev/null || : >"${file}.new"
+  printf '%s=%s\n' "$key" "$value" >>"${file}.new"
+  mv "${file}.new" "$file"
+}
 
 snapzilla_patch_compose() {
   local file="${1:?compose file}"
   sed -i '/^[[:space:]]*build:/d' "$file"
   sed -i "s|image: snapzilla-web:latest|image: ${SNAPZILLA_WEB_IMAGE}|" "$file"
   sed -i "s|image: snapzilla-analyzer:latest|image: ${SNAPZILLA_ANALYZER_IMAGE}|" "$file"
-  if grep -q 'container_name: snapzilla-ocr' "$file" 2>/dev/null; then
-    sed -i "s|image: gunthercox/ocr-service:.*|image: ${SNAPZILLA_OCR_IMAGE}|" "$file"
-  fi
 }
 
 snapzilla_write_env() {
   local app_dir="$1" host_port="$2"
-  if [[ -f "${app_dir}/.env" ]] && grep -q '^SNAPZILLA_PORT=' "${app_dir}/.env" 2>/dev/null; then
-    sed -i "s/^SNAPZILLA_PORT=.*/SNAPZILLA_PORT=${host_port}/" "${app_dir}/.env"
-  else
-    echo "SNAPZILLA_PORT=${host_port}" >"${app_dir}/.env"
+  local env_file="${app_dir}/.env"
+  local example="${app_dir}/.env.example"
+
+  if [[ ! -f "$env_file" && -f "$example" ]]; then
+    cp "$example" "$env_file"
   fi
+  [[ -f "$env_file" ]] || touch "$env_file"
+
+  if grep -q '^SNAPZILLA_PORT=' "$env_file" 2>/dev/null; then
+    sed -i "s/^SNAPZILLA_PORT=.*/SNAPZILLA_PORT=${host_port}/" "$env_file"
+  else
+    echo "SNAPZILLA_PORT=${host_port}" >>"$env_file"
+  fi
+
+  if [[ -n "${OPENROUTER_API_KEY:-}" ]]; then
+    snapzilla_env_set "$env_file" OPENROUTER_API_KEY "${OPENROUTER_API_KEY}"
+  elif ! grep -q '^OPENROUTER_API_KEY=' "$env_file" 2>/dev/null; then
+    echo "OPENROUTER_API_KEY=" >>"$env_file"
+  fi
+
+  if [[ -n "${OPENROUTER_MODEL:-}" ]]; then
+    snapzilla_env_set "$env_file" OPENROUTER_MODEL "${OPENROUTER_MODEL}"
+  fi
+
+  chmod 600 "$env_file"
 }
 
 snapzilla_pb_migrate() {
@@ -83,7 +106,7 @@ snapzilla_deploy_stack() {
 
   xdio_ghcr_login
   cd "${app_dir}" || exit 1
-  msg_info "Pulling Snapzilla images (web, analyzer, OCR, PocketBase)"
+  msg_info "Pulling Snapzilla images (web, analyzer, PocketBase)"
   if ! $STD docker compose pull; then
     msg_error "Could not pull images. Make ghcr.io/s4ndyp/snapzilla-* public or set GHCR_TOKEN on the Proxmox host."
     exit 1
