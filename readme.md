@@ -95,7 +95,7 @@ Optioneel: `GHCR_TOKEN`, `WEBTOOL_PORT` (default host-poort **80** → portal op
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/snapzilla/snapzilla.sh)"
 ```
 
-Git clone voor PocketBase-migraties; **geen Docker build** in de LXC (`ghcr.io/s4ndyp/snapzilla-web` + `snapzilla-analyzer`). Optioneel: `GHCR_TOKEN`, `SNAPZILLA_PORT` (default **80**). Standaard: **2 CPU, 2 GB RAM, 12 GB disk**.
+Git clone voor PocketBase-migraties; **geen Docker build** in de LXC (`ghcr.io/s4ndyp/snapzilla-web`, `snapzilla-analyzer`, OCR-image). Optioneel: `GHCR_TOKEN`, `SNAPZILLA_PORT` (default **80**). Standaard: **2 CPU, 3 GB RAM, 12 GB disk** (OCR).
 
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
@@ -113,7 +113,7 @@ Daarna het install-commando van de app, bijvoorbeeld WasmMe:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/wasmme/wasmme.sh)"
 ```
 
-Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk**; BackAI: **2 CPU, 2 GB RAM, 8 GB disk**; Snapzilla: **2 CPU, 2 GB RAM, 12 GB disk**). Debian 13, unprivileged LXC.
+Standaard resources: 1 CPU, 1 GB RAM, 8 GB disk (Fileshare: **2 CPU, 2 GB RAM, 10 GB disk**; BackAI: **2 CPU, 2 GB RAM, 8 GB disk**; Snapzilla: **2 CPU, 3 GB RAM, 12 GB disk**). Debian 13, unprivileged LXC.
 
 ## Apps
 
@@ -220,10 +220,8 @@ cd /opt/sync-ms && docker compose pull && docker compose up -d
 cd /opt/webtool && docker compose pull && docker compose up -d
 ```
 
-**Snapzilla** (git pull + images)
+**Snapzilla**
 
-```bash
-cd /opt/snapzilla && git pull --ff-only && docker compose pull && docker compose up -d
-```
+In de LXC: **`update`** (git sync, GHCR/OCR pull, PocketBase `migrate up`). Handmatig alleen als je upstream `scripts/update.sh` wilt (lokaal `--build`).
 
 Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`, `~/sync-ms.creds`, `~/webtool.creds`, `~/snapzilla.creds`).

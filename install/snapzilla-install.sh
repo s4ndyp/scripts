@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Snapzilla — git clone (migrations) + GHCR pull web/analyzer + PocketBase.
+# Snapzilla — git clone (migrations) + GHCR pull web/analyzer + OCR + PocketBase.
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
@@ -28,27 +28,8 @@ msg_ok "Cloned Snapzilla"
 # shellcheck source=/dev/null
 source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-snapzilla-install.sh")
 
-msg_info "Preparing Snapzilla stack (GHCR, no LXC build)"
-snapzilla_patch_compose "${APP_DIR}/docker-compose.yml"
-# shellcheck source=/dev/null
-source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-compose-install.sh")
-xdio_compose_set_host_port "${APP_DIR}/docker-compose.yml" "${HOST_PORT}" "80"
-echo "SNAPZILLA_PORT=${HOST_PORT}" >"${APP_DIR}/.env"
-msg_ok "Prepared Snapzilla stack"
-
-xdio_ghcr_login
-
-msg_info "Pulling Snapzilla images"
-cd "${APP_DIR}"
-if ! $STD docker compose pull; then
-  msg_error "Could not pull images. Make ghcr.io/s4ndyp/snapzilla-* public or set GHCR_TOKEN on the Proxmox host."
-  exit 1
-fi
-msg_ok "Pulled Snapzilla images"
-
-msg_info "Starting Snapzilla"
-$STD docker compose up -d
-msg_ok "Started Snapzilla"
+msg_info "Preparing Snapzilla stack (GHCR + OCR, no LXC build)"
+snapzilla_deploy_stack "${APP_DIR}" "${HOST_PORT}"
 
 msg_info "Waiting for Snapzilla gallery"
 _ready=0
@@ -76,12 +57,15 @@ Snapzilla
 Gallery:      ${GALLERY_URL}
 PocketBase:   ${GALLERY_URL}/_/  (eerste admin-setup)
 Compose:      ${APP_DIR}/docker-compose.yml
+Env:          ${APP_DIR}/.env
 Data:         Docker volume pb_data
 
-Images:       ${SNAPZILLA_WEB_IMAGE:-ghcr.io/s4ndyp/snapzilla-web:latest}
-              ${SNAPZILLA_ANALYZER_IMAGE:-ghcr.io/s4ndyp/snapzilla-analyzer:latest}
+Images:       ${SNAPZILLA_WEB_IMAGE}
+              ${SNAPZILLA_ANALYZER_IMAGE}
+OCR:          ${SNAPZILLA_OCR_IMAGE}
 
-Windows client: server-URL ${GALLERY_URL}
+Windows client: server-URL ${GALLERY_URL} (geen :3000 als poort 80)
+Update:       Proxmox menu **update** in de LXC (git + GHCR + PB migrate)
 See: https://github.com/s4ndyp/snapzilla/blob/main/readme.md
 EOF
 chmod 600 ~/snapzilla.creds
