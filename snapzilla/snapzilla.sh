@@ -20,7 +20,7 @@ export NSAPP="${NSAPP:-snapzilla}"
 export SCRIPT_SLUG="${SCRIPT_SLUG:-snapzilla}"
 var_tags="${var_tags:-screenshots;docker;pocketbase}"
 var_cpu="${var_cpu:-2}"
-var_ram="${var_ram:-3072}"
+var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-12}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
@@ -41,7 +41,7 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  msg_info "Updating Snapzilla (git sync + GHCR/OCR pull + PB migrate)"
+  msg_info "Updating Snapzilla (git sync + GHCR pull + PB migrate)"
   # shellcheck source=/dev/null
   source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL}/lib/xdio-snapzilla-install.sh")
   snapzilla_refresh_stack "/opt/snapzilla" "${SNAPZILLA_PORT:-80}"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Snapzilla — git clone (migrations) + GHCR pull web/analyzer + OCR + PocketBase.
+# Snapzilla — git clone (migrations) + GHCR pull web/analyzer + PocketBase; tekst via OpenRouter.
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
@@ -28,8 +28,12 @@ msg_ok "Cloned Snapzilla"
 # shellcheck source=/dev/null
 source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}/lib/xdio-snapzilla-install.sh")
 
-msg_info "Preparing Snapzilla stack (GHCR + OCR, no LXC build)"
+msg_info "Preparing Snapzilla stack (GHCR, OpenRouter via .env)"
 snapzilla_deploy_stack "${APP_DIR}" "${HOST_PORT}"
+
+if [[ -z "${OPENROUTER_API_KEY:-}" ]] && ! grep -q '^OPENROUTER_API_KEY=.\+' "${APP_DIR}/.env" 2>/dev/null; then
+  msg_warn "OPENROUTER_API_KEY is leeg — tekst/OCR via OpenRouter werkt niet tot je ${APP_DIR}/.env invult"
+fi
 
 msg_info "Waiting for Snapzilla gallery"
 _ready=0
@@ -57,15 +61,15 @@ Snapzilla
 Gallery:      ${GALLERY_URL}
 PocketBase:   ${GALLERY_URL}/_/  (eerste admin-setup)
 Compose:      ${APP_DIR}/docker-compose.yml
-Env:          ${APP_DIR}/.env
+Env:          ${APP_DIR}/.env  (OPENROUTER_API_KEY voor tekstherkenning)
 Data:         Docker volume pb_data
 
 Images:       ${SNAPZILLA_WEB_IMAGE}
               ${SNAPZILLA_ANALYZER_IMAGE}
-OCR:          ${SNAPZILLA_OCR_IMAGE}
 
-Windows client: server-URL ${GALLERY_URL} (geen :3000 als poort 80)
-Update:       Proxmox menu **update** in de LXC (git + GHCR + PB migrate)
+OpenRouter:   zet OPENROUTER_API_KEY in ${APP_DIR}/.env, daarna: docker compose up -d analyzer
+Windows client: server-URL ${GALLERY_URL}
+Update:       Proxmox menu **update** in de LXC
 See: https://github.com/s4ndyp/snapzilla/blob/main/readme.md
 EOF
 chmod 600 ~/snapzilla.creds
