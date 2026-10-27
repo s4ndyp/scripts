@@ -4,6 +4,17 @@
 SNAPZILLA_WEB_IMAGE="${SNAPZILLA_WEB_IMAGE:-ghcr.io/s4ndyp/snapzilla-web:latest}"
 SNAPZILLA_ANALYZER_IMAGE="${SNAPZILLA_ANALYZER_IMAGE:-ghcr.io/s4ndyp/snapzilla-analyzer:latest}"
 
+# community-scripts msg_info/msg_ok use a nested _MSG_BLOCKS stack; an unmatched
+# msg_info leaves a spinner running after cleanup_lxc (on_exit). Reset explicitly.
+snapzilla_msg_spinner_reset() {
+  if declare -f stop_spinner >/dev/null 2>&1; then
+    stop_spinner
+  fi
+  if declare -p _MSG_BLOCKS &>/dev/null 2>&1; then
+    _MSG_BLOCKS=()
+  fi
+}
+
 snapzilla_env_set() {
   local file="$1" key="$2" value="$3"
   grep -v "^${key}=" "$file" >"${file}.new" 2>/dev/null || : >"${file}.new"
@@ -110,6 +121,7 @@ snapzilla_sync_repo() {
     $STD git fetch origin "${branch}" 2>/dev/null || true
     git restore --source="origin/${branch}" --staged --worktree docker-compose.yml 2>/dev/null \
       || git checkout "origin/${branch}" -- docker-compose.yml 2>/dev/null || true
+    msg_ok "Restored docker-compose.yml from origin/${branch}"
   fi
 
   $STD git fetch origin "${branch}"
@@ -144,11 +156,11 @@ snapzilla_deploy_stack() {
     msg_error "docker compose up failed — check: cd ${app_dir} && docker compose ps && docker compose logs --tail=40"
     exit 1
   fi
-  msg_info "Recreating web and analyzer (GHCR images)"
   $STD docker compose up -d --force-recreate web analyzer 2>/dev/null || true
   msg_ok "Started Snapzilla stack"
 
   snapzilla_pb_migrate "${app_dir}" || true
+  snapzilla_msg_spinner_reset
 }
 
 snapzilla_refresh_stack() {
@@ -156,4 +168,5 @@ snapzilla_refresh_stack() {
   local host_port="${2:-$(snapzilla_read_host_port "$app_dir" "${SNAPZILLA_PORT:-80}")}"
   snapzilla_sync_repo "${app_dir}" "${SNAPZILLA_BRANCH:-main}"
   snapzilla_deploy_stack "${app_dir}" "${host_port}"
+  snapzilla_msg_spinner_reset
 }

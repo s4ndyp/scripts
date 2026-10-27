@@ -30,6 +30,8 @@ source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/
 
 msg_info "Preparing Snapzilla stack (GHCR, OpenRouter via .env)"
 snapzilla_deploy_stack "${APP_DIR}" "${HOST_PORT}"
+msg_ok "Snapzilla stack prepared"
+snapzilla_msg_spinner_reset
 
 if [[ -z "${OPENROUTER_API_KEY:-}" ]] && ! grep -q '^OPENROUTER_API_KEY=.\+' "${APP_DIR}/.env" 2>/dev/null; then
   msg_warn "OPENROUTER_API_KEY is leeg — zet key in web-UI (Model …) of in ${APP_DIR}/.env"
