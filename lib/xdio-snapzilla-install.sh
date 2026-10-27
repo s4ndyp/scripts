@@ -11,6 +11,20 @@ snapzilla_env_set() {
   mv "${file}.new" "$file"
 }
 
+snapzilla_read_host_port() {
+  local app_dir="${1:-/opt/snapzilla}" default_port="${2:-80}"
+  local env_file="${app_dir}/.env"
+  if [[ -f "$env_file" ]]; then
+    local p
+    p="$(grep -E '^SNAPZILLA_PORT=' "$env_file" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '\r"' | tr -d ' ')"
+    if [[ -n "$p" && "$p" =~ ^[0-9]+$ ]]; then
+      echo "$p"
+      return 0
+    fi
+  fi
+  echo "$default_port"
+}
+
 snapzilla_patch_compose() {
   local file="${1:?compose file}"
   sed -i '/^[[:space:]]*build:/d' "$file"
@@ -51,9 +65,10 @@ snapzilla_pb_migrate() {
   local app_dir="${1:-/opt/snapzilla}"
   cd "${app_dir}" || return 1
   msg_info "Running PocketBase migrations"
+  $STD docker compose up -d pocketbase
   local ready=0
   local _i
-  for _i in $(seq 1 30); do
+  for _i in $(seq 1 45); do
     if $STD docker compose exec -T pocketbase wget -q -O /dev/null http://127.0.0.1:8090/api/health 2>/dev/null; then
       ready=1
       break
@@ -61,13 +76,18 @@ snapzilla_pb_migrate() {
     sleep 2
   done
   if [[ "$ready" -ne 1 ]]; then
-    msg_warn "PocketBase not healthy — skipped migrate up (retry: docker compose exec pocketbase pocketbase migrate up)"
+    msg_warn "PocketBase not healthy — skipped migrate up (retry: cd ${app_dir} && bash scripts/pb-migrate.sh)"
     return 1
   fi
-  if ! $STD docker compose exec -T pocketbase pocketbase migrate up \
-    --dir=/pb_data \
-    --migrationsDir=/pb_migrations; then
-    msg_warn "PocketBase migrate up failed — check docker compose logs pocketbase"
+  local migrate_out
+  if ! migrate_out=$(
+    $STD docker compose exec -T pocketbase pocketbase migrate up \
+      --dir=/pb_data \
+      --migrationsDir=/pb_migrations 2>&1
+  ); then
+    msg_warn "PocketBase migrate up failed"
+    msg_warn "${migrate_out}"
+    msg_warn "Handmatig: cd ${app_dir} && docker compose exec pocketbase pocketbase migrate up --dir=/pb_data --migrationsDir=/pb_migrations"
     return 1
   fi
   msg_ok "PocketBase migrations applied"
@@ -84,19 +104,25 @@ snapzilla_sync_repo() {
   fi
 
   msg_info "Syncing Snapzilla from origin/${branch}"
-  $STD git fetch origin "${branch}" --depth=1
-  if ! $STD git diff --quiet -- docker-compose.yml 2>/dev/null; then
+
+  if ! git diff --quiet -- docker-compose.yml 2>/dev/null; then
     msg_info "Restoring docker-compose.yml from origin/${branch}"
+    $STD git fetch origin "${branch}" 2>/dev/null || true
     git restore --source="origin/${branch}" --staged --worktree docker-compose.yml 2>/dev/null \
-      || git checkout "origin/${branch}" -- docker-compose.yml
+      || git checkout "origin/${branch}" -- docker-compose.yml 2>/dev/null || true
   fi
-  $STD git reset --hard "origin/${branch}"
-  msg_ok "Synced Snapzilla repository"
+
+  $STD git fetch origin "${branch}"
+  if ! $STD git pull --ff-only origin "${branch}"; then
+    msg_warn "Fast-forward pull failed — resetting to origin/${branch}"
+    $STD git reset --hard "origin/${branch}"
+  fi
+  msg_ok "Synced Snapzilla repository ($(git rev-parse --short HEAD 2>/dev/null || echo '?'))"
 }
 
 snapzilla_deploy_stack() {
   local app_dir="${1:-/opt/snapzilla}"
-  local host_port="${2:-${SNAPZILLA_PORT:-80}}"
+  local host_port="${2:-$(snapzilla_read_host_port "$app_dir" "${SNAPZILLA_PORT:-80}")}"
 
   snapzilla_patch_compose "${app_dir}/docker-compose.yml"
   # shellcheck source=/dev/null
@@ -106,7 +132,7 @@ snapzilla_deploy_stack() {
 
   xdio_ghcr_login
   cd "${app_dir}" || exit 1
-  msg_info "Pulling Snapzilla images (web, analyzer, PocketBase)"
+  msg_info "Pulling Snapzilla images (PocketBase, web, analyzer)"
   if ! $STD docker compose pull; then
     msg_error "Could not pull images. Make ghcr.io/s4ndyp/snapzilla-* public or set GHCR_TOKEN on the Proxmox host."
     exit 1
@@ -114,13 +140,20 @@ snapzilla_deploy_stack() {
   msg_ok "Pulled Snapzilla images"
 
   msg_info "Starting Snapzilla stack"
-  $STD docker compose up -d
+  if ! $STD docker compose up -d --remove-orphans; then
+    msg_error "docker compose up failed — check: cd ${app_dir} && docker compose ps && docker compose logs --tail=40"
+    exit 1
+  fi
+  msg_info "Recreating web and analyzer (GHCR images)"
+  $STD docker compose up -d --force-recreate web analyzer 2>/dev/null || true
   msg_ok "Started Snapzilla stack"
 
   snapzilla_pb_migrate "${app_dir}" || true
 }
 
 snapzilla_refresh_stack() {
-  snapzilla_sync_repo "${1:-/opt/snapzilla}"
-  snapzilla_deploy_stack "${1:-/opt/snapzilla}" "${2:-${SNAPZILLA_PORT:-80}}"
+  local app_dir="${1:-/opt/snapzilla}"
+  local host_port="${2:-$(snapzilla_read_host_port "$app_dir" "${SNAPZILLA_PORT:-80}")}"
+  snapzilla_sync_repo "${app_dir}" "${SNAPZILLA_BRANCH:-main}"
+  snapzilla_deploy_stack "${app_dir}" "${host_port}"
 }

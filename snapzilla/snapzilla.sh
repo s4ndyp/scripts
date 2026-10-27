@@ -44,7 +44,8 @@ function update_script() {
   msg_info "Updating Snapzilla (git sync + GHCR pull + PB migrate)"
   # shellcheck source=/dev/null
   source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL}/lib/xdio-snapzilla-install.sh")
-  snapzilla_refresh_stack "/opt/snapzilla" "${SNAPZILLA_PORT:-80}"
+  _sz_port="$(snapzilla_read_host_port /opt/snapzilla "${SNAPZILLA_PORT:-80}")"
+  snapzilla_refresh_stack "/opt/snapzilla" "${_sz_port}"
   msg_ok "Updated Snapzilla"
   msg_ok "Updated successfully!"
   exit
