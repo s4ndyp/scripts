@@ -32,7 +32,7 @@ msg_info "Preparing Snapzilla stack (GHCR, OpenRouter via .env)"
 snapzilla_deploy_stack "${APP_DIR}" "${HOST_PORT}"
 
 if [[ -z "${OPENROUTER_API_KEY:-}" ]] && ! grep -q '^OPENROUTER_API_KEY=.\+' "${APP_DIR}/.env" 2>/dev/null; then
-  msg_warn "OPENROUTER_API_KEY is leeg — tekst/OCR via OpenRouter werkt niet tot je ${APP_DIR}/.env invult"
+  msg_warn "OPENROUTER_API_KEY is leeg — zet key in web-UI (Model …) of in ${APP_DIR}/.env"
 fi
 
 msg_info "Waiting for Snapzilla gallery"
@@ -61,13 +61,13 @@ Snapzilla
 Gallery:      ${GALLERY_URL}
 PocketBase:   ${GALLERY_URL}/_/  (eerste admin-setup)
 Compose:      ${APP_DIR}/docker-compose.yml
-Env:          ${APP_DIR}/.env  (OPENROUTER_API_KEY voor tekstherkenning)
+Env:          ${APP_DIR}/.env  (optioneel OPENROUTER_API_KEY; of key in web-UI → Model …)
 Data:         Docker volume pb_data
 
 Images:       ${SNAPZILLA_WEB_IMAGE}
               ${SNAPZILLA_ANALYZER_IMAGE}
 
-OpenRouter:   zet OPENROUTER_API_KEY in ${APP_DIR}/.env, daarna: docker compose up -d analyzer
+OpenRouter:   web-UI → Model … (key + test), of OPENROUTER_API_KEY in ${APP_DIR}/.env
 Windows client: server-URL ${GALLERY_URL}
 Update:       Proxmox menu **update** in de LXC
 See: https://github.com/s4ndyp/snapzilla/blob/main/readme.md

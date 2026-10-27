@@ -95,7 +95,7 @@ Optioneel: `GHCR_TOKEN`, `WEBTOOL_PORT` (default host-poort **80** → portal op
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/snapzilla/snapzilla.sh)"
 ```
 
-Git clone voor PocketBase-migraties; **geen Docker build** in de LXC (`ghcr.io/s4ndyp/snapzilla-web`, `snapzilla-analyzer`). Tekst/OCR via **OpenRouter** → `OPENROUTER_API_KEY` in `/opt/snapzilla/.env` (optioneel vóór install op de Proxmox-host exporteren). Optioneel: `GHCR_TOKEN`, `SNAPZILLA_PORT` (default **80**). Standaard: **2 CPU, 2 GB RAM, 12 GB disk**.
+Git clone voor PocketBase-migraties; **geen Docker build** in de LXC (`ghcr.io/s4ndyp/snapzilla-web`, `snapzilla-analyzer`). Tekst/OCR via **OpenRouter** (key in web-UI **Model …** of `OPENROUTER_API_KEY` in `/opt/snapzilla/.env`). Optioneel: `GHCR_TOKEN`, `SNAPZILLA_PORT` (default **80**). Standaard: **2 CPU, 2 GB RAM, 12 GB disk**.
 
 Private **GHCR**-images: log eerst in op de Proxmox-host:
 
@@ -222,6 +222,6 @@ cd /opt/webtool && docker compose pull && docker compose up -d
 
 **Snapzilla**
 
-In de LXC: **`update`** (git sync, GHCR pull, PocketBase `migrate up`). OpenRouter-key blijft in `/opt/snapzilla/.env`.
+In de LXC: **`update`** (git pull, GHCR pull, web/analyzer recreate, PocketBase `migrate up`). `.env` en UI-key blijven behouden.
 
 Credentials-overzicht in de container: `~/<app>.creds` (bijv. `~/dyncompare.creds`, `~/sync-ms.creds`, `~/webtool.creds`, `~/snapzilla.creds`).
